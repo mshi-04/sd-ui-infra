@@ -53,3 +53,23 @@ Entra ID のアプリケーション定義は組織のテナントに影響し�
 | リソース削除保護 | 無効 | 有効 |
 | Function App のスケール上限 | 40 | 100 |
 | ログ保持 | 30日 | 90日 |
+
+## CI/CD
+
+GitHub Actions は Entra ID の workload identity federation でサインインします。
+federated credential は `bootstrap/` が作成し、subject は `pull_request` と `environment:<env>` です。
+
+`.tfvars` はコミットしないため、CI では変数を GitHub Actions variables から渡します。
+
+| variable | スコープ | 用途 |
+|---|---|---|
+| `AZURE_CLIENT_ID` | repository | CI用アプリケーションの client id |
+| `AZURE_TENANT_ID` | repository | テナントID |
+| `AZURE_SUBSCRIPTION_ID` | repository | サブスクリプションID |
+| `TFSTATE_RESOURCE_GROUP_NAME` | repository | state 用リソースグループ名 |
+| `TFSTATE_STORAGE_ACCOUNT_NAME` | repository | state 用 Storage Account 名 |
+| `DEV_SPA_REDIRECT_URIS` / `DEV_ALLOWED_ORIGINS` | repository | PR時の dev plan に使う値 |
+| `SPA_REDIRECT_URIS` / `ALLOWED_ORIGINS` | environment (`dev`, `prod`) | 環境ごとのクライアント設定 |
+
+リスト型の variable は `["https://app.example.com"]` の形式で登録します。
+`prod` の GitHub Environment には required reviewers を設定し、手動承認を必須にします。
