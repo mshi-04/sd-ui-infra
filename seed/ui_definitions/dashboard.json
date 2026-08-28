@@ -1,0 +1,46 @@
+{
+  "id": "dashboard:2026-06-01",
+  "surface": "dashboard",
+  "version": "2026-06-01",
+  "revision": "a1b2c3",
+  "components": [
+    {
+      "id": "usage-summary",
+      "type": "Card",
+      "props": { "title": "Usage", "span": 6 },
+      "children": [
+        { "id": "usage-chart", "type": "Chart", "props": { "metric": "requests" } }
+      ]
+    },
+    {
+      "id": "billing-summary",
+      "type": "Card",
+      "props": { "title": "Billing", "span": 6 },
+      "requiredEntitlements": ["billing.read"],
+      "children": [
+        { "id": "invoice-list", "type": "List", "props": { "source": "invoices" } },
+        {
+          "id": "refund-action",
+          "type": "Button",
+          "props": { "label": "Refund", "action": "billing.refund" },
+          "requiredEntitlements": ["billing.write"]
+        }
+      ]
+    }
+  ],
+  "variants": [
+    {
+      "audience": "SupportAgent",
+      "components": [
+        { "id": "impersonation-banner", "type": "Banner", "props": { "tone": "warning" } },
+        { "id": "usage-summary", "type": "Card", "props": { "title": "Customer usage" } }
+      ]
+    },
+    {
+      "audience": "UiAdmin",
+      "components": [
+        { "id": "definition-inspector", "type": "Panel", "props": { "source": "ui_definitions" } }
+      ]
+    }
+  ]
+}
