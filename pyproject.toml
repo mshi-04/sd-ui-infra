@@ -1,0 +1,6 @@
+[tool.ruff]
+line-length = 130
+
+[tool.pytest.ini_options]
+pythonpath = ["functions/sdui_api"]
+testpaths = ["functions/sdui_api/tests"]
