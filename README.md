@@ -12,10 +12,13 @@ Microsoft Entra ID で認証したユーザーのアカウント属性に応じ�
 | `envs/` | 環境ごとのルートモジュール |
 | `environments/` | 環境ごとの変数ファイル |
 | `functions/sdui_api/` | UIスキーマ配信API（Azure Functions / Python） |
+| `seed/` | UI定義とアカウントプロファイルの初期データ |
+| `scripts/` | 運用スクリプト |
 | `docs/` | 技術スタック、アーキテクチャ、規約 |
 
 ## ドキュメント
 
+- [docs/getting_started.md](docs/getting_started.md)
 - [docs/tech_stack.md](docs/tech_stack.md)
 - [docs/architecture.md](docs/architecture.md)
 - [docs/auth.md](docs/auth.md)

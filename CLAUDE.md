@@ -5,6 +5,7 @@
 
 ## 主要文書
 
+- [docs/getting_started.md](docs/getting_started.md): テナント準備から dev 環境が動くまでの順序
 - [docs/tech_stack.md](docs/tech_stack.md): 技術スタック
 - [docs/architecture.md](docs/architecture.md): サーバー駆動UIの構成、UIスキーマ、解決フロー
 - [docs/auth.md](docs/auth.md): Entra ID のアプリ構成、トークン検証、ログ衛生

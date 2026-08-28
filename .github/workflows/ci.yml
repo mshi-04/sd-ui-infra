@@ -24,9 +24,9 @@ jobs:
           pip install -r functions/sdui_api/requirements.txt
           pip install pytest ruff
       - name: Check formatting
-        run: ruff format --check functions
+        run: ruff format --check functions scripts
       - name: Lint
-        run: ruff check functions
+        run: ruff check functions scripts
       - name: Test
         run: pytest
 
