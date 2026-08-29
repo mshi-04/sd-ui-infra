@@ -98,6 +98,14 @@ resource "azuread_application_pre_authorized" "client" {
   permission_ids       = [random_uuid.ui_schema_read.result]
 }
 
+resource "azuread_application_pre_authorized" "additional" {
+  for_each = toset(var.pre_authorized_client_ids)
+
+  application_id       = azuread_application.api.id
+  authorized_client_id = each.value
+  permission_ids       = [random_uuid.ui_schema_read.result]
+}
+
 resource "azuread_app_role_assignment" "user" {
   for_each = {
     for assignment in flatten([

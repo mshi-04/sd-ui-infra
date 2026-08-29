@@ -43,6 +43,7 @@ module "identity" {
   app_roles                    = local.app_roles
   app_role_assignments         = var.app_role_assignments
   public_client_redirect_uris  = var.public_client_redirect_uris
+  pre_authorized_client_ids    = var.pre_authorized_client_ids
   app_role_assignment_required = false
 }
 

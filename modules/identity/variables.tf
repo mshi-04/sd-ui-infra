@@ -45,3 +45,9 @@ variable "app_role_assignments" {
     error_message = "app_role_assignments には app_roles に定義された role のみ指定できます。"
   }
 }
+
+variable "pre_authorized_client_ids" {
+  description = "同意なしで scope を要求できるクライアントの client id。運用確認用に dev でのみ指定する"
+  type        = list(string)
+  default     = []
+}

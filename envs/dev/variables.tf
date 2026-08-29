@@ -24,3 +24,9 @@ variable "app_role_assignments" {
   type        = map(list(string))
   default     = {}
 }
+
+variable "pre_authorized_client_ids" {
+  description = "同意なしで scope を要求できるクライアントの client id"
+  type        = list(string)
+  default     = []
+}
