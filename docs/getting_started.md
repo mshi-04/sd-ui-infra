@@ -87,6 +87,9 @@ python scripts/seed_cosmos.py
 
 ## 6. 動作確認
 
+dev では Azure CLI を `pre_authorized_client_ids` に登録しているため、同意なしでトークンを取得できます。
+prod では登録しないため、この確認は行えません。
+
 ```bash
 az account get-access-token --resource "api://$(terraform -chdir=envs/dev output -raw entra_api_client_id)" --query accessToken -o tsv
 ```
