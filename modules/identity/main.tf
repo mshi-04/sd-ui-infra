@@ -51,6 +51,10 @@ resource "azuread_application" "api" {
       description          = app_role.value.description
     }
   }
+
+  lifecycle {
+    ignore_changes = [identifier_uris]
+  }
 }
 
 resource "azuread_application_identifier_uri" "api" {
