@@ -10,6 +10,7 @@
 | `modules/` | 再利用可能なモジュール |
 | `envs/dev`, `envs/prod` | 環境ごとのルートモジュール |
 | `environments/` | 環境ごとの変数ファイル |
+| `config/app_roles.json` | app role と、role が付与する entitlement の正本 |
 
 `bootstrap/` は state backend そのものを作るため、local state で1度だけ適用します。
 

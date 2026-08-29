@@ -11,29 +11,12 @@ terraform {
   }
 }
 
-locals {
-  app_roles = {
-    UiAdmin = {
-      display_name = "UI Admin"
-      description  = "Grants visibility into every component of every surface."
-    }
-    BillingViewer = {
-      display_name = "Billing Viewer"
-      description  = "Grants visibility into billing components."
-    }
-    SupportAgent = {
-      display_name = "Support Agent"
-      description  = "Grants visibility into support components."
-    }
-  }
-}
-
 data "azuread_client_config" "current" {}
 
 resource "random_uuid" "ui_schema_read" {}
 
 resource "random_uuid" "app_role" {
-  for_each = local.app_roles
+  for_each = var.app_roles
 }
 
 resource "azuread_application" "api" {
@@ -57,7 +40,7 @@ resource "azuread_application" "api" {
   }
 
   dynamic "app_role" {
-    for_each = local.app_roles
+    for_each = var.app_roles
 
     content {
       id                   = random_uuid.app_role[app_role.key].result
@@ -109,4 +92,22 @@ resource "azuread_application_pre_authorized" "client" {
   application_id       = azuread_application.api.id
   authorized_client_id = azuread_application.client.client_id
   permission_ids       = [random_uuid.ui_schema_read.result]
+}
+
+resource "azuread_app_role_assignment" "user" {
+  for_each = {
+    for assignment in flatten([
+      for user_object_id, roles in var.app_role_assignments : [
+        for role in roles : {
+          key            = "${user_object_id}:${role}"
+          user_object_id = user_object_id
+          role           = role
+        }
+      ]
+    ]) : assignment.key => assignment
+  }
+
+  app_role_id         = random_uuid.app_role[each.value.role].result
+  principal_object_id = each.value.user_object_id
+  resource_object_id  = azuread_service_principal.api.object_id
 }

@@ -89,7 +89,7 @@ python scripts/dev_server.py --port 8080
 | ヘッダー | 内容 |
 |---|---|
 | `X-Dev-Oid` | アカウント識別子。`seed/account_profiles/` の `userId` と一致すればその profile が適用される |
-| `X-Dev-Roles` | app role をカンマ区切りで指定（例 `SupportAgent,UiAdmin`） |
+| `X-Dev-Roles` | app role をカンマ区切りで指定（例 `SupportAgent,UiAdmin`）。`config/app_roles.json` の entitlement が付与される |
 
 Android エミュレーターからは `http://10.0.2.2:8080/api/` で到達します（`10.0.2.2` はホストの `127.0.0.1`）。
 平文HTTPになるため、debug ビルドのみ cleartext を許可してください。実機の場合は `--host 0.0.0.0` で起動し、
@@ -99,11 +99,14 @@ Android エミュレーターからは `http://10.0.2.2:8080/api/` で到達し�
 
 | リクエスト | 返る component |
 |---|---|
-| `X-Dev-Oid` 未指定 | `usage-summary` のみ |
+| ヘッダー無し | `usage-summary` |
+| `X-Dev-Roles: BillingViewer` | `usage-summary`, `billing-summary`（子は `invoice-list` のみ） |
+| `X-Dev-Roles: UiAdmin` | `usage-summary`, `billing-summary`（`refund-action` を含む）, `definition-inspector` |
 | `X-Dev-Roles: SupportAgent` | `usage-summary`, `impersonation-banner` |
 | `X-Dev-Oid: 00000000-0000-0000-0000-000000000000` | `billing-summary`（先頭に固定）, `usage-summary`, `impersonation-banner`。`theme` は `dark` |
 
-seed の profile は `billing.read` のみ持つため、`billing-summary` の子から `refund-action` が除かれます。
+同じ surface でも role と profile によって component tree が変わります。
+実APIでは `X-Dev-Roles` の代わりに、access token の `roles` クレームが同じ役割を果たします。
 
 ## 実APIへの切り替え
 

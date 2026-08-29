@@ -54,9 +54,19 @@ Cosmos DB for NoSQL
 `ui_resolver` は次の順序で適用します。後段ほど優先度が高くなります。
 
 1. base definition の component tree を起点にする
-2. app role と group から導出した audience に一致する variant を適用する
-3. account profile の entitlement で component を絞り込む
+2. app role と account profile の `audiences` に一致する variant を適用する
+3. entitlement で component を絞り込む
 4. account profile の preference（theme, density, pinned components）を適用する
+
+entitlement は2つの経路から集まり、和集合になります。
+
+| 経路 | 出所 | 用途 |
+|---|---|---|
+| app role | Entra ID の role 割り当て → `config/app_roles.json` の対応表 | 役割単位の一括切り替え |
+| account profile | Cosmos DB の `entitlements` | ユーザー個別の追加付与 |
+
+role を割り当てるだけでUIが変わり、profile 文書は個別の上書きだけに使えます。
+どちらも無いユーザーには、entitlement を要求しない component のみが返ります。
 
 同じ `id` の component は上書き、存在しない `id` は追加として扱います。
 評価は純粋関数として実装し、I/O は `ui_repository` に閉じ込めます。

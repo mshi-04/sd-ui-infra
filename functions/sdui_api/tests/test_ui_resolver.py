@@ -38,8 +38,19 @@ def definition() -> UiDefinition:
     return UiDefinition.from_document(BASE_DOCUMENT)
 
 
+ROLE_ENTITLEMENTS = {
+    "UiAdmin": frozenset({"billing.read", "billing.write", "support.read"}),
+    "BillingViewer": frozenset({"billing.read"}),
+    "SupportAgent": frozenset({"support.read"}),
+}
+
+
 def _principal(*roles: str) -> Principal:
     return Principal(subject="user-oid", app_roles=frozenset(roles))
+
+
+def _resolve(definition: UiDefinition, profile: AccountProfile, principal: Principal):
+    return resolve(definition, profile, principal, ROLE_ENTITLEMENTS)
 
 
 def _component_ids(resolved) -> list[str]:
@@ -47,7 +58,7 @@ def _component_ids(resolved) -> list[str]:
 
 
 def test_components_requiring_missing_entitlements_are_removed(definition):
-    resolved = resolve(definition, AccountProfile.empty("user-oid"), _principal())
+    resolved = _resolve(definition, AccountProfile.empty("user-oid"), _principal())
 
     assert _component_ids(resolved) == ["usage-summary"]
 
@@ -55,7 +66,7 @@ def test_components_requiring_missing_entitlements_are_removed(definition):
 def test_granted_entitlement_keeps_component_and_filters_children(definition):
     profile = AccountProfile(user_id="user-oid", entitlements=frozenset({"billing.read"}))
 
-    resolved = resolve(definition, profile, _principal())
+    resolved = _resolve(definition, profile, _principal())
     billing = next(component for component in resolved.components if component.id == "billing-summary")
 
     assert [child.id for child in billing.children] == ["invoice-list"]
@@ -64,8 +75,8 @@ def test_granted_entitlement_keeps_component_and_filters_children(definition):
 def test_variant_applies_only_to_matching_audience(definition):
     profile = AccountProfile.empty("user-oid")
 
-    without_role = resolve(definition, profile, _principal())
-    with_role = resolve(definition, profile, _principal("SupportAgent"))
+    without_role = _resolve(definition, profile, _principal())
+    with_role = _resolve(definition, profile, _principal("SupportAgent"))
 
     assert without_role.components[0].props["title"] == "Usage"
     assert with_role.components[0].props["title"] == "Customer usage"
@@ -75,7 +86,7 @@ def test_variant_applies_only_to_matching_audience(definition):
 def test_variant_audience_can_come_from_profile(definition):
     profile = AccountProfile(user_id="user-oid", audiences=frozenset({"SupportAgent"}))
 
-    resolved = resolve(definition, profile, _principal())
+    resolved = _resolve(definition, profile, _principal())
 
     assert "impersonation-banner" in _component_ids(resolved)
 
@@ -83,7 +94,7 @@ def test_variant_audience_can_come_from_profile(definition):
 def test_entitlements_are_applied_after_variants(definition):
     profile = AccountProfile(user_id="user-oid", audiences=frozenset({"SupportAgent"}))
 
-    resolved = resolve(definition, profile, _principal())
+    resolved = _resolve(definition, profile, _principal())
 
     assert "billing-summary" not in _component_ids(resolved)
 
@@ -95,7 +106,7 @@ def test_pinned_components_are_moved_to_the_front(definition):
         preferences=Preferences(pinned_component_ids=("billing-summary",)),
     )
 
-    resolved = resolve(definition, profile, _principal())
+    resolved = _resolve(definition, profile, _principal())
 
     assert _component_ids(resolved) == ["billing-summary", "usage-summary"]
 
@@ -103,7 +114,7 @@ def test_pinned_components_are_moved_to_the_front(definition):
 def test_preferences_are_returned_in_payload(definition):
     profile = AccountProfile(user_id="user-oid", preferences=Preferences(theme="dark", density="compact"))
 
-    payload = resolve(definition, profile, _principal()).to_payload()
+    payload = _resolve(definition, profile, _principal()).to_payload()
 
     assert payload["theme"] == "dark"
     assert payload["density"] == "compact"
@@ -113,7 +124,7 @@ def test_preferences_are_returned_in_payload(definition):
 def test_payload_hides_entitlement_requirements(definition):
     profile = AccountProfile(user_id="user-oid", entitlements=frozenset({"billing.read"}))
 
-    payload = resolve(definition, profile, _principal()).to_payload()
+    payload = _resolve(definition, profile, _principal()).to_payload()
 
     assert "requiredEntitlements" not in payload["components"][1]
 
@@ -122,5 +133,33 @@ def test_etag_differs_per_resolution(definition):
     entitled = AccountProfile(user_id="user-oid", entitlements=frozenset({"billing.read"}))
     plain = AccountProfile.empty("user-oid")
 
-    assert etag_of(resolve(definition, entitled, _principal())) != etag_of(resolve(definition, plain, _principal()))
-    assert etag_of(resolve(definition, plain, _principal())) == etag_of(resolve(definition, plain, _principal()))
+    assert etag_of(_resolve(definition, entitled, _principal())) != etag_of(_resolve(definition, plain, _principal()))
+    assert etag_of(_resolve(definition, plain, _principal())) == etag_of(_resolve(definition, plain, _principal()))
+
+
+def test_app_role_grants_entitlement_without_a_profile(definition):
+    resolved = _resolve(definition, AccountProfile.empty("user-oid"), _principal("BillingViewer"))
+
+    assert "billing-summary" in _component_ids(resolved)
+
+
+def test_ui_admin_role_reaches_nested_components(definition):
+    resolved = _resolve(definition, AccountProfile.empty("user-oid"), _principal("UiAdmin"))
+    billing = next(component for component in resolved.components if component.id == "billing-summary")
+
+    assert [child.id for child in billing.children] == ["invoice-list", "refund-action"]
+
+
+def test_profile_entitlements_extend_role_entitlements(definition):
+    profile = AccountProfile(user_id="user-oid", entitlements=frozenset({"billing.write"}))
+
+    resolved = _resolve(definition, profile, _principal("BillingViewer"))
+    billing = next(component for component in resolved.components if component.id == "billing-summary")
+
+    assert [child.id for child in billing.children] == ["invoice-list", "refund-action"]
+
+
+def test_unknown_role_grants_nothing(definition):
+    resolved = _resolve(definition, AccountProfile.empty("user-oid"), _principal("Unmapped"))
+
+    assert _component_ids(resolved) == ["usage-summary"]

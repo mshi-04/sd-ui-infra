@@ -1,4 +1,6 @@
+import json
 import os
+from collections.abc import Mapping
 from dataclasses import dataclass
 from functools import lru_cache
 
@@ -17,6 +19,7 @@ class Settings:
     ui_definitions_container: str
     account_profiles_container: str
     cache_max_age_seconds: int
+    role_entitlements: Mapping[str, frozenset[str]]
 
     @property
     def issuer(self) -> str:
@@ -25,6 +28,10 @@ class Settings:
     @property
     def jwks_uri(self) -> str:
         return f"https://login.microsoftonline.com/{self.tenant_id}/discovery/v2.0/keys"
+
+
+def parse_role_entitlements(document: str) -> Mapping[str, frozenset[str]]:
+    return {role: frozenset(entitlements) for role, entitlements in json.loads(document).items()}
 
 
 @lru_cache(maxsize=1)
@@ -38,4 +45,5 @@ def load_settings() -> Settings:
         ui_definitions_container=os.environ["UI_DEFINITIONS_CONTAINER"],
         account_profiles_container=os.environ["ACCOUNT_PROFILES_CONTAINER"],
         cache_max_age_seconds=int(os.environ.get("UI_CACHE_MAX_AGE_SECONDS", DEFAULT_CACHE_MAX_AGE_SECONDS)),
+        role_entitlements=parse_role_entitlements(os.environ.get("ROLE_ENTITLEMENTS", "{}")),
     )

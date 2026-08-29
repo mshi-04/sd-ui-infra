@@ -11,6 +11,7 @@
 | `functions/sdui_api/tests/test_ui_resolver.py` | 解決フローの優先順位 |
 | `functions/sdui_api/tests/test_seed_documents.py` | `seed/` の初期データが解決できること |
 | `functions/sdui_api/tests/test_dev_server.py` | モックサーバーの解決結果とヘッダー解釈 |
+| `functions/sdui_api/tests/test_constants.py` | `ROLE_ENTITLEMENTS` の解釈 |
 
 実行は `pytest` です。`pyproject.toml` の `pythonpath` により `functions/sdui_api` を import できます。
 

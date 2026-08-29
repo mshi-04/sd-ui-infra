@@ -19,14 +19,19 @@ Terraform の `modules/identity` が2つのアプリケーションを管理し�
 
 ### app role
 
-| role | 用途 |
-|---|---|
-| `UiAdmin` | 全 surface の全 component を閲覧できる |
-| `BillingViewer` | 請求系 component を閲覧できる |
-| `SupportAgent` | サポート向け component を閲覧できる |
+app role とその role が付与する entitlement は `config/app_roles.json` が正本です。
+`envs/*` がこのファイルを読み、`modules/identity`（Entra への登録）と `modules/sdui_api`（`ROLE_ENTITLEMENTS` 設定）へ渡します。
 
-app role は audience の導出にのみ使い、entitlement の最終判定は account profile 側で行います。
-role を増やすときは `modules/identity` と `docs/architecture.md` の解決フローを同時に更新します。
+| role | 付与する entitlement |
+|---|---|
+| `UiAdmin` | `billing.read`, `billing.write`, `support.read` |
+| `BillingViewer` | `billing.read` |
+| `SupportAgent` | `support.read` |
+
+role を増やすときは `config/app_roles.json` を編集して apply します。Terraform と API の両方へ同時に反映されます。
+
+ユーザーへの role 割り当ては `app_role_assignments` 変数（ユーザーの object id → role の一覧）で管理できます。
+ポータルから割り当てた場合は Terraform の管理外になるため、どちらかに統一してください。
 
 ## トークン検証
 

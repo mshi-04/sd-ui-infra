@@ -39,6 +39,11 @@ variable "required_scope" {
   default     = "UiSchema.Read"
 }
 
+variable "role_entitlements" {
+  description = "app role が付与する entitlement"
+  type        = map(list(string))
+}
+
 variable "cosmos_account_id" {
   description = "Cosmos DB アカウントのリソースID"
   type        = string

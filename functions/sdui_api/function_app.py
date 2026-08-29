@@ -34,7 +34,7 @@ def get_ui_schema(req: func.HttpRequest) -> func.HttpResponse:
     if definition is None:
         return error_response(404, "surface_not_found")
 
-    resolved = resolve(definition, fetch_profile(settings, principal.subject), principal)
+    resolved = resolve(definition, fetch_profile(settings, principal.subject), principal, settings.role_entitlements)
     etag = etag_of(resolved)
 
     if req.headers.get("If-None-Match") == etag:
