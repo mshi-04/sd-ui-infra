@@ -9,7 +9,7 @@ Terraform の `modules/identity` が2つのアプリケーションを管理し�
 | アプリケーション | 用途 |
 |---|---|
 | API app (`sd-ui-api-<env>`) | access token の audience。scope と app role を公開する |
-| Client app (`sd-ui-client-<env>`) | SPA。Authorization Code + PKCE で token を取得する |
+| Client app (`sd-ui-client-<env>`) | Android の public client。Authorization Code + PKCE で token を取得する |
 
 ### 公開する scope
 

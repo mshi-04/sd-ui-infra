@@ -86,8 +86,8 @@ resource "azuread_application" "client" {
   sign_in_audience = "AzureADMyOrg"
   owners           = [data.azuread_client_config.current.object_id]
 
-  single_page_application {
-    redirect_uris = var.spa_redirect_uris
+  public_client {
+    redirect_uris = var.public_client_redirect_uris
   }
 
   required_resource_access {

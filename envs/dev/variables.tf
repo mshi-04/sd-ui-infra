@@ -9,12 +9,12 @@ variable "project_name" {
   default     = "sd-ui"
 }
 
-variable "spa_redirect_uris" {
-  description = "クライアントSPAのリダイレクトURI"
+variable "public_client_redirect_uris" {
+  description = "Android クライアントのリダイレクトURI"
   type        = list(string)
 }
 
 variable "allowed_origins" {
-  description = "UIスキーマAPIを呼び出すクライアントのオリジン"
+  description = "UIスキーマAPIを呼び出すブラウザクライアントのオリジン。Android のみの場合は空にする"
   type        = list(string)
 }

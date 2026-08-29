@@ -13,12 +13,12 @@ variable "project_name" {
   default     = "sd-ui"
 }
 
-variable "spa_redirect_uris" {
-  description = "クライアントSPAのリダイレクトURI"
+variable "public_client_redirect_uris" {
+  description = "モバイルクライアントのリダイレクトURI。MSAL Android は msauth://<package>/<signature-hash> 形式"
   type        = list(string)
   validation {
-    condition     = alltrue([for uri in var.spa_redirect_uris : startswith(uri, "https://") || startswith(uri, "http://localhost")])
-    error_message = "spa_redirect_uris は https または http://localhost で始まる必要があります。"
+    condition     = alltrue([for uri in var.public_client_redirect_uris : startswith(uri, "msauth://") || startswith(uri, "http://localhost")])
+    error_message = "public_client_redirect_uris は msauth:// または http://localhost で始まる必要があります。"
   }
 }
 

@@ -22,6 +22,7 @@ Microsoft Entra ID で認証したユーザーのアカウント属性に応じ�
 - [docs/tech_stack.md](docs/tech_stack.md)
 - [docs/architecture.md](docs/architecture.md)
 - [docs/auth.md](docs/auth.md)
+- [docs/client_integration.md](docs/client_integration.md)
 - [docs/infrastructure.md](docs/infrastructure.md)
 - [docs/coding_standards.md](docs/coding_standards.md)
 - [docs/commands.md](docs/commands.md)
