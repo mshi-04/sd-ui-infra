@@ -47,3 +47,33 @@ variable "continuous_backup_tier" {
     error_message = "continuous_backup_tier は Continuous7Days または Continuous30Days を指定してください。"
   }
 }
+
+variable "periodic_backup_interval_in_minutes" {
+  description = "Periodic バックアップの取得間隔"
+  type        = number
+  default     = 240
+  validation {
+    condition     = var.periodic_backup_interval_in_minutes >= 60 && var.periodic_backup_interval_in_minutes <= 1440
+    error_message = "periodic_backup_interval_in_minutes は 60 から 1440 の範囲で指定してください。"
+  }
+}
+
+variable "periodic_backup_retention_in_hours" {
+  description = "Periodic バックアップの保持時間"
+  type        = number
+  default     = 8
+  validation {
+    condition     = var.periodic_backup_retention_in_hours >= 8 && var.periodic_backup_retention_in_hours <= 720
+    error_message = "periodic_backup_retention_in_hours は 8 から 720 の範囲で指定してください。"
+  }
+}
+
+variable "periodic_backup_storage_redundancy" {
+  description = "Periodic バックアップの冗長性"
+  type        = string
+  default     = "Local"
+  validation {
+    condition     = contains(["Geo", "Local", "Zone"], var.periodic_backup_storage_redundancy)
+    error_message = "periodic_backup_storage_redundancy は Geo, Local, Zone のいずれかを指定してください。"
+  }
+}
