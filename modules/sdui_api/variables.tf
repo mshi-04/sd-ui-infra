@@ -81,7 +81,7 @@ variable "log_analytics_workspace_id" {
 }
 
 variable "allowed_origins" {
-  description = "UIスキーマAPIを呼び出すクライアントのオリジン"
+  description = "UIスキーマAPIを呼び出すブラウザクライアントのオリジン。ネイティブアプリのみの場合は空にする"
   type        = list(string)
 }
 

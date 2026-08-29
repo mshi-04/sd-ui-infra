@@ -39,7 +39,7 @@ module "identity" {
 
   env                          = local.env
   project_name                 = var.project_name
-  spa_redirect_uris            = var.spa_redirect_uris
+  public_client_redirect_uris  = var.public_client_redirect_uris
   app_role_assignment_required = false
 }
 

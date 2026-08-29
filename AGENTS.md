@@ -9,6 +9,7 @@
 - [docs/tech_stack.md](docs/tech_stack.md): 技術スタック
 - [docs/architecture.md](docs/architecture.md): サーバー駆動UIの構成、UIスキーマ、解決フロー
 - [docs/auth.md](docs/auth.md): Entra ID のアプリ構成、トークン検証、ログ衛生
+- [docs/client_integration.md](docs/client_integration.md): Android クライアントとのAPI契約、MSAL設定、モックサーバー
 - [docs/infrastructure.md](docs/infrastructure.md): envs / modules 構成、Terraform の変更手順
 - [docs/coding_standards.md](docs/coding_standards.md): Terraform / Python / ドキュメントの規約
 - [docs/commands.md](docs/commands.md): よく使うコマンド

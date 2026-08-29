@@ -1,4 +1,4 @@
-subscription_id   = "00000000-0000-0000-0000-000000000000"
-project_name      = "sd-ui"
-spa_redirect_uris = ["http://localhost:5173/auth/callback"]
-allowed_origins   = ["http://localhost:5173"]
+subscription_id             = "00000000-0000-0000-0000-000000000000"
+project_name                = "sd-ui"
+public_client_redirect_uris = ["msauth://com.example.sdui/0000000000000000000000000000%3D"]
+allowed_origins             = []

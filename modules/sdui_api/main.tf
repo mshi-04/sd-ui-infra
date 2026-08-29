@@ -65,9 +65,13 @@ resource "azurerm_function_app_flex_consumption" "api" {
   site_config {
     application_insights_connection_string = var.application_insights_connection_string
 
-    cors {
-      allowed_origins     = var.allowed_origins
-      support_credentials = false
+    dynamic "cors" {
+      for_each = length(var.allowed_origins) > 0 ? [1] : []
+
+      content {
+        allowed_origins     = var.allowed_origins
+        support_credentials = false
+      }
     }
   }
 

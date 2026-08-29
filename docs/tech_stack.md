@@ -19,6 +19,7 @@
 | カテゴリ | サービス | 用途 |
 |---|---|---|
 | Auth | Microsoft Entra ID | ユーザー認証、app role によるUI出し分けの入力 |
+| Client | Android (Kotlin / Compose) | 別リポジトリ `sd-ui-app`。MSAL Android でサインインする |
 | Compute | Azure Functions (Flex Consumption) | UIスキーマ配信API |
 | Database | Azure Cosmos DB for NoSQL (serverless) | UI定義、アカウントプロファイル |
 | Storage | Azure Storage Account | Functions のデプロイコンテナ、Terraform state |
