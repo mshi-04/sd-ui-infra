@@ -61,8 +61,11 @@ GET {base_url}/ui/{surface}
 | scope | `api://<entra_api_client_id>/UiSchema.Read` |
 | redirect_uri | `msauth://<package>/<url-encoded signature hash>` |
 
-`tenant_id` は `11111111-1111-4111-8111-111111111111` です。
-`client_id` と API の client id は `envs/dev` を apply した後に確定します。
+実値は `envs/dev` の output から取得します。テナントIDを含め、この文書には実値を書きません。
+
+```bash
+terraform -chdir=envs/dev output
+```
 
 ### redirect URI の求め方
 

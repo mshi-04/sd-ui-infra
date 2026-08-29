@@ -50,7 +50,7 @@ Entra ID のアプリケーション定義は組織のテナントに影響し�
 | 項目 | dev | prod |
 |---|---|---|
 | Cosmos DB | serverless | serverless |
-| Cosmos DB backup | Periodic (8時間) | Continuous (7日) |
+| Cosmos DB backup | Periodic（4時間間隔 / 8時間保持 / Local） | Continuous（7日） |
 | リソース削除保護 | 無効 | 有効 |
 | Function App のスケール上限 | 40 | 100 |
 | ログ保持 | 30日 | 90日 |

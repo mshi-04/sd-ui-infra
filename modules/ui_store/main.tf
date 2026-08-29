@@ -32,8 +32,11 @@ resource "azurerm_cosmosdb_account" "ui" {
   }
 
   backup {
-    type = var.backup_type
-    tier = var.backup_type == "Continuous" ? var.continuous_backup_tier : null
+    type                = var.backup_type
+    tier                = var.backup_type == "Continuous" ? var.continuous_backup_tier : null
+    interval_in_minutes = var.backup_type == "Periodic" ? var.periodic_backup_interval_in_minutes : null
+    retention_in_hours  = var.backup_type == "Periodic" ? var.periodic_backup_retention_in_hours : null
+    storage_redundancy  = var.backup_type == "Periodic" ? var.periodic_backup_storage_redundancy : null
   }
 }
 
