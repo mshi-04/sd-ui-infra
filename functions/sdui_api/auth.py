@@ -6,6 +6,7 @@ from typing import Any
 
 import jwt
 from jwt import PyJWKClient
+from jwt.exceptions import PyJWKClientConnectionError
 
 from constants import SUBJECT_MASK_LENGTH
 
@@ -65,7 +66,9 @@ def verify_token(
 ) -> Principal:
     try:
         signing_key = key_resolver(token)
-    except jwt.PyJWKClientError as error:
+    except PyJWKClientConnectionError:
+        raise
+    except jwt.PyJWTError as error:
         raise AuthError("unresolvable_signing_key") from error
 
     try:
