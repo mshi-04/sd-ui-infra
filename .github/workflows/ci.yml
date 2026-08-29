@@ -1,0 +1,81 @@
+name: ci
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r functions/sdui_api/requirements.txt
+          pip install pytest ruff
+      - name: Check formatting
+        run: ruff format --check functions scripts
+      - name: Lint
+        run: ruff check functions scripts
+      - name: Test
+        run: pytest
+
+  terraform-validate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env: [dev, prod]
+    steps:
+      - uses: actions/checkout@v5
+      - name: Read Terraform version
+        id: terraform_version
+        run: echo "version=$(cat .terraform-version)" >> "$GITHUB_OUTPUT"
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ steps.terraform_version.outputs.version }}
+          terraform_wrapper: false
+      - name: Check formatting
+        run: terraform fmt -check -recursive
+      - name: Initialize without backend
+        run: terraform -chdir=envs/${{ matrix.env }} init -backend=false
+      - name: Validate
+        run: terraform -chdir=envs/${{ matrix.env }} validate
+
+  terraform-plan:
+    needs: terraform-validate
+    runs-on: ubuntu-latest
+    env:
+      ARM_USE_OIDC: "true"
+      ARM_USE_AZUREAD: "true"
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      TF_VAR_subscription_id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      TF_VAR_spa_redirect_uris: ${{ vars.DEV_SPA_REDIRECT_URIS }}
+      TF_VAR_allowed_origins: ${{ vars.DEV_ALLOWED_ORIGINS }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Read Terraform version
+        id: terraform_version
+        run: echo "version=$(cat .terraform-version)" >> "$GITHUB_OUTPUT"
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ steps.terraform_version.outputs.version }}
+          terraform_wrapper: false
+      - name: Initialize
+        run: |
+          terraform -chdir=envs/dev init \
+            -backend-config="resource_group_name=${{ vars.TFSTATE_RESOURCE_GROUP_NAME }}" \
+            -backend-config="storage_account_name=${{ vars.TFSTATE_STORAGE_ACCOUNT_NAME }}"
+      - name: Plan
+        run: terraform -chdir=envs/dev plan -lock=false -input=false

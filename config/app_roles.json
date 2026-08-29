@@ -1,0 +1,25 @@
+{
+  "UiAdmin": {
+    "display_name": "UI Admin",
+    "description": "Grants visibility into every component of every surface.",
+    "entitlements": [
+      "billing.read",
+      "billing.write",
+      "support.read"
+    ]
+  },
+  "BillingViewer": {
+    "display_name": "Billing Viewer",
+    "description": "Grants visibility into billing components.",
+    "entitlements": [
+      "billing.read"
+    ]
+  },
+  "SupportAgent": {
+    "display_name": "Support Agent",
+    "description": "Grants visibility into support components.",
+    "entitlements": [
+      "support.read"
+    ]
+  }
+}
