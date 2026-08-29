@@ -14,7 +14,8 @@ terraform {
 }
 
 provider "azurerm" {
-  subscription_id = var.subscription_id
+  subscription_id     = var.subscription_id
+  storage_use_azuread = true
 
   features {}
 }
@@ -124,10 +125,26 @@ resource "azurerm_role_assignment" "ci_rbac_admin" {
       )
       OR
       (
-        @Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {${var.assignable_role_definition_ids}}
+        @Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {${join(", ", var.ci_assignable_role_definition_ids)}}
+      )
+    )
+    AND
+    (
+      (
+        !(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})
+      )
+      OR
+      (
+        @Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {${join(", ", var.ci_assignable_role_definition_ids)}}
       )
     )
   CONDITION
+}
+
+resource "azurerm_role_assignment" "operator_tfstate" {
+  scope                = azurerm_storage_account.tfstate.id
+  role_definition_name = "Storage Blob Data Owner"
+  principal_id         = data.azuread_client_config.current.object_id
 }
 
 resource "azurerm_role_assignment" "ci_tfstate" {

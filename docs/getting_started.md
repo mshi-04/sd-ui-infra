@@ -42,6 +42,9 @@ terraform -chdir=bootstrap apply -var="subscription_id=<subscription-id>" -var="
 
 出力の `tfstate_storage_account_name`、`tfstate_resource_group_name`、`ci_client_id`、`tenant_id` を控えます。
 
+state 用ストレージはキー認証を無効にしているため、`bootstrap` は実行者へ `Storage Blob Data Owner` を
+付与します。別の担当者が `envs/*` を操作する場合は、同じロールを追加してください。
+
 ## 3. GitHub Actions の変数
 
 [docs/infrastructure.md](infrastructure.md) の表にある variables を登録します。
