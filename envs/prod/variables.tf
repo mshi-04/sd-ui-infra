@@ -18,3 +18,9 @@ variable "allowed_origins" {
   description = "UIスキーマAPIを呼び出すブラウザクライアントのオリジン。Android のみの場合は空にする"
   type        = list(string)
 }
+
+variable "app_role_assignments" {
+  description = "ユーザーの object id と、割り当てる app role の対応"
+  type        = map(list(string))
+  default     = {}
+}

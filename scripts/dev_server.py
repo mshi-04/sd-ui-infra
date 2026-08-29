@@ -12,6 +12,7 @@ from models import AccountProfile, UiDefinition
 from ui_resolver import etag_of, resolve
 
 SEED_ROOT = REPOSITORY_ROOT / "seed"
+APP_ROLES_PATH = REPOSITORY_ROOT / "config" / "app_roles.json"
 ROUTE_PREFIX = "/api/ui/"
 OID_HEADER = "X-Dev-Oid"
 ROLES_HEADER = "X-Dev-Roles"
@@ -34,13 +35,18 @@ def load_profiles() -> dict[str, AccountProfile]:
     return profiles
 
 
+def load_role_entitlements() -> dict[str, frozenset[str]]:
+    roles = json.loads(APP_ROLES_PATH.read_text(encoding="utf-8"))
+    return {name: frozenset(role["entitlements"]) for name, role in roles.items()}
+
+
 def resolve_payload(surface: str, oid: str, roles: frozenset[str]) -> tuple[dict, str] | None:
     definition = load_definitions().get(surface)
     if definition is None:
         return None
 
     profile = load_profiles().get(oid, AccountProfile.empty(oid))
-    resolved = resolve(definition, profile, Principal(subject=oid, app_roles=roles))
+    resolved = resolve(definition, profile, Principal(subject=oid, app_roles=roles), load_role_entitlements())
     return resolved.to_payload(), etag_of(resolved)
 
 

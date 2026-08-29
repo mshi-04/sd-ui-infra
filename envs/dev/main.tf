@@ -27,7 +27,8 @@ provider "azurerm" {
 provider "azuread" {}
 
 locals {
-  env = "dev"
+  env       = "dev"
+  app_roles = jsondecode(file("${path.module}/../../config/app_roles.json"))
 }
 
 data "azurerm_resource_group" "sdui" {
@@ -39,6 +40,8 @@ module "identity" {
 
   env                          = local.env
   project_name                 = var.project_name
+  app_roles                    = local.app_roles
+  app_role_assignments         = var.app_role_assignments
   public_client_redirect_uris  = var.public_client_redirect_uris
   app_role_assignment_required = false
 }
@@ -71,9 +74,10 @@ module "sdui_api" {
   resource_group_name = data.azurerm_resource_group.sdui.name
   location            = data.azurerm_resource_group.sdui.location
 
-  tenant_id      = module.identity.tenant_id
-  api_client_id  = module.identity.api_client_id
-  required_scope = module.identity.ui_schema_read_scope
+  tenant_id         = module.identity.tenant_id
+  api_client_id     = module.identity.api_client_id
+  required_scope    = module.identity.ui_schema_read_scope
+  role_entitlements = module.identity.role_entitlements
 
   cosmos_account_id               = module.ui_store.account_id
   cosmos_account_name             = module.ui_store.account_name

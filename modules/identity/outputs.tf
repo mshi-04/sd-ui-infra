@@ -23,9 +23,9 @@ output "ui_schema_read_scope" {
   value       = "UiSchema.Read"
 }
 
-output "app_role_values" {
-  description = "定義済み app role の値"
-  value       = keys(local.app_roles)
+output "role_entitlements" {
+  description = "app role が付与する entitlement"
+  value       = { for name, role in var.app_roles : name => role.entitlements }
 }
 
 output "tenant_id" {

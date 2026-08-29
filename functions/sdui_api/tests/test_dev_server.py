@@ -35,3 +35,9 @@ def test_roles_header_is_split_and_trimmed():
     assert parse_roles(" SupportAgent , UiAdmin ") == frozenset({"SupportAgent", "UiAdmin"})
     assert parse_roles(None) == frozenset()
     assert parse_roles("") == frozenset()
+
+
+def test_app_role_opens_components_for_an_unknown_account():
+    payload, _ = resolve_payload("dashboard", UNKNOWN_OID, frozenset({"BillingViewer"}))
+
+    assert "billing-summary" in [component["id"] for component in payload["components"]]

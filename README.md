@@ -11,6 +11,7 @@ Microsoft Entra ID で認証したユーザーのアカウント属性に応じ�
 | `modules/` | 再利用可能な Terraform モジュール |
 | `envs/` | 環境ごとのルートモジュール |
 | `environments/` | 環境ごとの変数ファイル |
+| `config/` | app role と entitlement の定義 |
 | `functions/sdui_api/` | UIスキーマ配信API（Azure Functions / Python） |
 | `seed/` | UI定義とアカウントプロファイルの初期データ |
 | `scripts/` | 運用スクリプト |

@@ -1,6 +1,6 @@
 import hashlib
 import json
-from collections.abc import Iterable, Sequence
+from collections.abc import Collection, Iterable, Mapping, Sequence
 
 from auth import Principal
 from models import AccountProfile, Component, ResolvedUi, UiDefinition
@@ -8,7 +8,12 @@ from models import AccountProfile, Component, ResolvedUi, UiDefinition
 ETAG_LENGTH = 16
 
 
-def resolve(definition: UiDefinition, profile: AccountProfile, principal: Principal) -> ResolvedUi:
+def resolve(
+    definition: UiDefinition,
+    profile: AccountProfile,
+    principal: Principal,
+    role_entitlements: Mapping[str, Collection[str]],
+) -> ResolvedUi:
     audiences = profile.audiences | principal.app_roles
 
     components: tuple[Component, ...] = definition.components
@@ -16,7 +21,7 @@ def resolve(definition: UiDefinition, profile: AccountProfile, principal: Princi
         if variant.audience in audiences:
             components = _merge(components, variant.components)
 
-    components = _filter_by_entitlements(components, profile.entitlements)
+    components = _filter_by_entitlements(components, granted_entitlements(profile, principal, role_entitlements))
     components = _apply_pins(components, profile.preferences.pinned_component_ids)
 
     return ResolvedUi(
@@ -27,6 +32,15 @@ def resolve(definition: UiDefinition, profile: AccountProfile, principal: Princi
         density=profile.preferences.density,
         components=components,
     )
+
+
+def granted_entitlements(
+    profile: AccountProfile,
+    principal: Principal,
+    role_entitlements: Mapping[str, Collection[str]],
+) -> frozenset[str]:
+    from_roles = {entitlement for role in principal.app_roles for entitlement in role_entitlements.get(role, ())}
+    return profile.entitlements | frozenset(from_roles)
 
 
 def etag_of(resolved: ResolvedUi) -> str:

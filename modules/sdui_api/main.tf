@@ -80,6 +80,7 @@ resource "azurerm_function_app_flex_consumption" "api" {
     ENTRA_TENANT_ID                  = var.tenant_id
     ENTRA_API_CLIENT_ID              = var.api_client_id
     REQUIRED_SCOPE                   = var.required_scope
+    ROLE_ENTITLEMENTS                = jsonencode(var.role_entitlements)
     COSMOS_ENDPOINT                  = var.cosmos_endpoint
     COSMOS_DATABASE                  = var.cosmos_database_name
     UI_DEFINITIONS_CONTAINER         = var.ui_definitions_container_name
