@@ -30,8 +30,13 @@ variable "github_repository" {
   }
 }
 
-variable "assignable_role_definition_ids" {
-  description = "CI が割り当て可能なロール定義IDのGUID。カンマ区切りの引用符付き文字列として condition へ埋め込む"
-  type        = string
-  default     = "'ba92f5b4-2d11-453d-a403-e96b0029c9fe','2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'"
+variable "ci_assignable_role_definition_ids" {
+  description = "CI が割り当てを許可される組み込みロールの定義ID"
+  type        = list(string)
+  default = [
+    # Storage Blob Data Owner
+    "b7e6dc6d-f1e8-4753-8033-0f276bb0955b",
+    # Storage Blob Data Contributor
+    "ba92f5b4-2d11-453d-a403-e96b0029c9fe",
+  ]
 }
