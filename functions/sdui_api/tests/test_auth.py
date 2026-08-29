@@ -1,7 +1,9 @@
 import datetime as dt
 
+import jwt
 import pytest
 from conftest import AUDIENCE, ISSUER, REQUIRED_SCOPE, SUBJECT
+from jwt.exceptions import PyJWKClientConnectionError
 
 from auth import AuthError, extract_bearer_token, mask_subject, verify_token
 
@@ -84,3 +86,21 @@ def test_mask_subject_hides_raw_value():
 
     assert SUBJECT not in masked
     assert masked == mask_subject(SUBJECT)
+
+
+def test_verify_token_rejects_a_token_whose_key_cannot_be_resolved():
+    def failing_resolver(token: str):
+        raise jwt.DecodeError("not a jwt")
+
+    with pytest.raises(AuthError) as error:
+        _verify("not-a-jwt", failing_resolver)
+
+    assert error.value.reason == "unresolvable_signing_key"
+
+
+def test_verify_token_propagates_jwks_connection_failures(issue_token):
+    def unreachable_resolver(token: str):
+        raise PyJWKClientConnectionError("jwks unreachable")
+
+    with pytest.raises(PyJWKClientConnectionError):
+        _verify(issue_token(), unreachable_resolver)
