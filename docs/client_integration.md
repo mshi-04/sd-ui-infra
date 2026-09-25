@@ -97,6 +97,7 @@ python scripts/dev_server.py --port 8080
 Android エミュレーターからは `http://10.0.2.2:8080/api/` で到達します（`10.0.2.2` はホストの `127.0.0.1`）。
 平文HTTPになるため、debug ビルドのみ cleartext を許可してください。実機の場合は `--host 0.0.0.0` で起動し、
 ホストのLAN IPを指定します。
+Android アプリはこれらのヘッダーを送らないため、アプリから接続した場合は常に匿名の利用者として応答します。
 
 ### 出し分けの確認例
 
@@ -113,7 +114,7 @@ Android エミュレーターからは `http://10.0.2.2:8080/api/` で到達し�
 
 ## アプリ側の実装状況
 
-`sd-ui-app` の `develop`（`30870b7`）を読み取って確認した内容です。契約の大部分は実装済みです。
+`sd-ui-app` の `develop`（`b770c14`）を読み取って確認した内容です。契約の大部分は実装済みです。
 
 | 契約 | 実装 | 場所 |
 |---|---|---|
@@ -122,14 +123,18 @@ Android エミュレーターからは `http://10.0.2.2:8080/api/` で到達し�
 | 200 / 304 / 401 / 404 | sealed interface で分岐。その他は `HttpException` | `data/remote/UiSchemaRemoteDataSource.kt` |
 | 未知の `type` をスキップ | `mapNotNull` で除去 | `data/mapper/UiSchemaMapper.kt` |
 | 未知のキーを無視 | `Json { ignoreUnknownKeys = true }` | `data/di/NetworkModule.kt` |
-| `X-Dev-Oid` / `X-Dev-Roles` | debug ビルドのみの Interceptor。Gradle プロパティから注入 | `debug/.../DevIdentityModule.kt` |
+| `Authorization` | `MsalAuthClient` が取得した access token を `AuthorizationInterceptor` が付与。トークンが無ければヘッダー無しで送り、401 ならログイン画面へ戻る | `data/remote/AuthorizationInterceptor.kt` |
 | 平文HTTP | `usesCleartextTraffic` は debug マニフェストのみ | `src/debug/AndroidManifest.xml` |
 
+base URL と scope は `gradle.properties` の `API_BASE_URL` と `API_SCOPE` で指定し、既定は dev の実APIです。
 モックサーバーへ接続する場合の起動例です。
 
 ```bash
-./gradlew installDebug -PAPI_BASE_URL=http://10.0.2.2:8080/api/ -PDEV_ROLES=BillingViewer
+./gradlew installDebug -PAPI_BASE_URL=http://10.0.2.2:8080/api/
 ```
+
+ダッシュボードへ進むにはサインインが必要です。`dev_server.py` はトークンを検証しないため、
+アプリからは匿名として扱われ、`usage-summary` のみが返ります。
 
 ### 契約側が守るべき制約
 
@@ -143,17 +148,23 @@ Android エミュレーターからは `http://10.0.2.2:8080/api/` で到達し�
 
 ### 未対応
 
-- **MSAL が未導入です。** `Authorization` ヘッダーを送らないため、実APIへ向けると常に 401 になります。
-  実APIへ切り替える前に、アプリ側でトークン取得とヘッダー付与が必要です。
-- `X-Dev-*` ヘッダーは debug ビルド限定のため、release ビルドはモックサーバーに対しても匿名扱いになります。
+`sd-ui-app` の `docs/server-contract.md`「未実装のもの」に挙がっている項目です。
+
+- release ビルド用の redirect URI。アプリは debug キーストア由来の値だけを持ちます。
+- `props` の object / 配列 / `null` 値の保持（上記の制約 1）
+- `Button` などの component が持つ action の実行
+- `ETag` と解決済みスキーマの永続化。キャッシュはメモリ上のみです。
+- `Cache-Control` の尊重。`max-age` 内でも毎回サーバーへ条件付きで問い合わせます。
 
 ## 実APIへの切り替え
 
-1. `envs/dev` を apply し、output から `api_base_url`、`entra_client_app_client_id`、`entra_api_client_id` を取得
-2. base URL を `https://sdui-api.example.invalid/api/` 系へ変更
-3. `X-Dev-*` ヘッダーを外し、MSAL で取得した access token を `Authorization` に載せる
+アプリは既定で dev の実APIを向き、MSAL で取得した access token を送ります。
+実APIで動かすためにインフラ側で必要な手順は次のとおりです。
 
-API 契約自体はモックと実APIで同一です。切り替えで変わるのは base URL と認証だけです。
+1. `envs/dev` を apply し、output から `api_base_url`、`entra_client_app_client_id`、`entra_api_client_id` を取得
+2. アプリの `gradle.properties` の `API_BASE_URL` と `API_SCOPE`、MSAL 設定が output と一致しているか確認する
+
+API 契約自体はモックと実APIで同一です。違いは base URL と、トークンを検証するかどうかだけです。
 
 Android はネイティブクライアントのため CORS は関係しません。
 ブラウザから叩く予定ができた場合のみ、`allowed_origins` にオリジンを追加して apply します。
