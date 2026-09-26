@@ -5,3 +5,12 @@ src = ["functions/sdui_api", "scripts"]
 [tool.pytest.ini_options]
 pythonpath = ["functions/sdui_api", "scripts"]
 testpaths = ["functions/sdui_api/tests"]
+
+[tool.mypy]
+python_version = "3.14"
+mypy_path = ["functions/sdui_api", "scripts"]
+files = ["functions/sdui_api", "scripts"]
+exclude = ["^functions/sdui_api/tests/"]
+strict = true
+warn_unreachable = true
+enable_error_code = ["ignore-without-code"]

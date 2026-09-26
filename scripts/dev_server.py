@@ -1,14 +1,16 @@
 import argparse
 import json
 import sys
+from collections.abc import Mapping
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from typing import Any
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "functions" / "sdui_api"))
 
 from auth import Principal
-from models import AccountProfile, UiDefinition
+from models import AccountProfile, ResolvedUiPayload, UiDefinition
 from ui_resolver import etag_of, resolve
 
 SEED_ROOT = REPOSITORY_ROOT / "seed"
@@ -40,7 +42,7 @@ def load_role_entitlements() -> dict[str, frozenset[str]]:
     return {name: frozenset(role["entitlements"]) for name, role in roles.items()}
 
 
-def resolve_payload(surface: str, oid: str, roles: frozenset[str]) -> tuple[dict, str] | None:
+def resolve_payload(surface: str, oid: str, roles: frozenset[str]) -> tuple[ResolvedUiPayload, str] | None:
     definition = load_definitions().get(surface)
     if definition is None:
         return None
@@ -79,10 +81,10 @@ class UiSchemaHandler(BaseHTTPRequestHandler):
 
         self._send_json(200, payload, etag)
 
-    def log_message(self, format: str, *args) -> None:
+    def log_message(self, format: str, *args: Any) -> None:
         sys.stderr.write(f"{self.address_string()} {format % args}\n")
 
-    def _send_json(self, status_code: int, payload: dict, etag: str | None = None) -> None:
+    def _send_json(self, status_code: int, payload: Mapping[str, object], etag: str | None = None) -> None:
         body = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
         self._send_headers(status_code, len(body), etag)
         self.wfile.write(body)

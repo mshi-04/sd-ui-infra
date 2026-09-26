@@ -46,6 +46,7 @@
 | SDK | `azure-cosmos`, `azure-identity` |
 | JWT | `PyJWT[crypto]` による Entra ID トークン検証 |
 | Lint / format | `ruff` |
+| Type check | `mypy`。設定は `pyproject.toml` の `[tool.mypy]`。`jsonschema` の型は typeshed の `types-jsonschema` で補う |
 | Seed validation | `jsonschema`。`scripts/seed_cosmos.py` の登録前検証だけで使うため、開発依存に置く |
 | Test | `pytest` |
 | Dependency locks | Python 3.14 向け `uv==0.12.19` の universal resolution。実行時は `functions/sdui_api/requirements.txt`、開発時はこれに `requirements-dev.txt` を追加 |
@@ -58,7 +59,7 @@
 |---|---|
 | Platform | GitHub Actions |
 | Auth to Azure | Entra ID workload identity federation (OIDC) |
-| PR | Terraform plan、lint、test |
+| PR | Terraform plan、lint、型チェック、test |
 | develop merge | dev auto deploy |
 | Prod | manual approval |
 
