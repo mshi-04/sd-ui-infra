@@ -33,6 +33,8 @@ jobs:
         run: ruff check functions scripts
       - name: Test
         run: pytest
+      - name: Validate seed documents
+        run: python scripts/seed_cosmos.py --dry-run
 
   terraform-validate:
     runs-on: ubuntu-latest

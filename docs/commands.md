@@ -73,6 +73,31 @@ Linux の例:
 func start --script-root functions/sdui_api
 ```
 
+## Seed
+
+`scripts/seed_cosmos.py` は `seed/ui_definitions/` と `seed/account_profiles/` の全ファイルを検証し、すべて成功した場合だけ Cosmos DB へ upsert します。実行には上記の `requirements.txt` と `requirements-dev.txt` の両方が必要です。
+
+```bash
+python scripts/seed_cosmos.py --dry-run
+python scripts/seed_cosmos.py --endpoint <cosmos-endpoint>
+```
+
+- `--dry-run` は endpoint と Azure の資格情報を必要とせず、Cosmos DB クライアントも生成しません。検証結果と登録予定の件数だけを表示します。
+- 通常の登録では `--endpoint` または `COSMOS_ENDPOINT` が必須です。データベース名は `--database` または `COSMOS_DATABASE`（既定 `sdui`）、コンテナー名は `UI_DEFINITIONS_CONTAINER` と `ACCOUNT_PROFILES_CONTAINER` で変更できます。
+- 1件でも検証エラーがあれば、何も書き込まずに終了コード 1 で終わります。エラーは相対ファイルパス、文書内の位置（JSON パス）、違反内容の形で表示し、profile の値は表示しません。
+- 事前検証は入力不備による途中までの登録を防ぎますが、通信障害時に書き込み全体を原子的にするものではありません。
+
+検証内容は次のとおりです。
+
+| 種類 | 内容 |
+|---|---|
+| JSON Schema | `seed/schemas/<ディレクトリ名>.schema.json`。必須項目と型を検証し、任意項目の省略、未知の `type`、`props` の未知のキー、文書の未知のフィールドは許容します |
+| `ui_definitions` | `id` が `{surface}:{version}` と一致すること。同じ兄弟配列（`components`、各 `children`、各 variant の `components`）で component の `id` が重複しないこと |
+| `account_profiles` | `id` が `userId` と一致すること |
+| 警告 | `props` の値が object または配列の場合。Android クライアントが破棄するため警告のみとし、登録は止めません |
+
+variant の component が base と同じ `id` を持つのは正当な上書きのため、エラーにしません。
+
 ## デプロイ
 
 ```bash

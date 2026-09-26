@@ -5,6 +5,7 @@ import pytest
 
 from auth import Principal
 from models import AccountProfile, UiDefinition
+from seed_validation import RULES_BY_DIRECTORY, SCHEMA_ROOT, validate_seed
 from ui_resolver import resolve
 
 SEED_ROOT = Path(__file__).resolve().parents[3] / "seed"
@@ -30,16 +31,17 @@ def example_profile() -> AccountProfile:
     return AccountProfile.from_document(_load("account_profiles/example.json"))
 
 
-def test_seed_definition_id_matches_surface_and_version():
-    document = _load("ui_definitions/dashboard.json")
+def test_every_seed_document_passes_validation():
+    report = validate_seed(SEED_ROOT)
 
-    assert document["id"] == f"{document['surface']}:{document['version']}"
+    assert [str(error) for error in report.errors] == []
+    assert report.documents
 
 
-def test_seed_profile_id_matches_user_id():
-    document = _load("account_profiles/example.json")
+def test_every_seed_directory_is_covered_by_validation():
+    directories = {path.name for path in SEED_ROOT.iterdir() if path.is_dir()}
 
-    assert document["id"] == document["userId"]
+    assert directories == {*RULES_BY_DIRECTORY, SCHEMA_ROOT.name}
 
 
 def test_seed_documents_resolve_for_the_example_profile(dashboard, example_profile):

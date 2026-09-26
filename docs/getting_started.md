@@ -12,6 +12,7 @@ terraform -chdir=envs/dev init -backend=false
 terraform -chdir=envs/dev validate
 ruff check functions scripts
 pytest
+python scripts/seed_cosmos.py --dry-run
 ```
 
 `terraform plan`、`terraform apply`、Functions のデプロイはサブスクリプションが必要です。
@@ -84,6 +85,7 @@ python scripts/seed_cosmos.py
 ```
 
 `seed/account_profiles/example.json` の `id` と `userId` は、対象ユーザーの Entra ID `oid` に置き換えてください。
+`--dry-run` は Cosmos DB へ接続せずに全ファイルを検証します。検証エラーが1件でもあれば、登録は何も書き込まずに失敗します。詳細は [docs/commands.md](commands.md) の Seed を参照してください。
 
 ## 6. 動作確認
 
