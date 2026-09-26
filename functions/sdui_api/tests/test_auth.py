@@ -1,11 +1,15 @@
 import datetime as dt
+from unittest.mock import Mock
+from urllib.error import URLError
 
 import jwt
 import pytest
 from conftest import AUDIENCE, ISSUER, REQUIRED_SCOPE, SUBJECT
 from jwt.exceptions import PyJWKClientConnectionError
 
+import auth
 from auth import AuthError, extract_bearer_token, mask_subject, verify_token
+from dependency_errors import DependencyUnavailableError
 
 
 def _verify(token: str, key_resolver, **overrides):
@@ -98,9 +102,27 @@ def test_verify_token_rejects_a_token_whose_key_cannot_be_resolved():
     assert error.value.reason == "unresolvable_signing_key"
 
 
-def test_verify_token_propagates_jwks_connection_failures(issue_token):
-    def unreachable_resolver(token: str):
-        raise PyJWKClientConnectionError("jwks unreachable")
+def test_verify_token_reports_jwks_connection_failures_as_unavailable_dependency(issue_token):
+    token = issue_token()
 
-    with pytest.raises(PyJWKClientConnectionError):
-        _verify(issue_token(), unreachable_resolver)
+    def unreachable_resolver(token: str):
+        raise PyJWKClientConnectionError(f"jwks unreachable for {token}") from URLError(TimeoutError("timed out"))
+
+    with pytest.raises(DependencyUnavailableError) as error:
+        _verify(token, unreachable_resolver)
+
+    assert (error.value.dependency, error.value.detail) == ("jwks", "URLError")
+    assert token not in str(error.value)
+
+
+def test_jwks_client_is_bounded_by_fetch_timeout(monkeypatch):
+    jwks_client = Mock()
+    monkeypatch.setattr(auth, "PyJWKClient", jwks_client)
+    auth.jwks_key_resolver.cache_clear()
+
+    try:
+        auth.jwks_key_resolver("https://example.invalid/keys")
+    finally:
+        auth.jwks_key_resolver.cache_clear()
+
+    jwks_client.assert_called_once_with("https://example.invalid/keys", cache_keys=True, timeout=auth.JWKS_FETCH_TIMEOUT_SECONDS)

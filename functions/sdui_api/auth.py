@@ -9,12 +9,15 @@ from jwt import PyJWKClient
 from jwt.exceptions import PyJWKClientConnectionError
 
 from constants import SUBJECT_MASK_LENGTH
+from dependency_errors import DependencyUnavailableError
 
 KeyResolver = Callable[[str], Any]
 
 BEARER_PREFIX = "Bearer "
 SIGNING_ALGORITHMS = ["RS256"]
 REQUIRED_CLAIMS = ["exp", "nbf", "iss", "aud", "oid"]
+JWKS_DEPENDENCY = "jwks"
+JWKS_FETCH_TIMEOUT_SECONDS = 3
 
 
 class AuthError(Exception):
@@ -48,7 +51,7 @@ def extract_bearer_token(authorization_header: str | None) -> str:
 
 @lru_cache(maxsize=4)
 def jwks_key_resolver(jwks_uri: str) -> KeyResolver:
-    client = PyJWKClient(jwks_uri, cache_keys=True)
+    client = PyJWKClient(jwks_uri, cache_keys=True, timeout=JWKS_FETCH_TIMEOUT_SECONDS)
 
     def resolve(token: str) -> Any:
         return client.get_signing_key_from_jwt(token).key
@@ -66,8 +69,8 @@ def verify_token(
 ) -> Principal:
     try:
         signing_key = key_resolver(token)
-    except PyJWKClientConnectionError:
-        raise
+    except PyJWKClientConnectionError as error:
+        raise DependencyUnavailableError(JWKS_DEPENDENCY, _failure_kind(error)) from error
     except jwt.PyJWTError as error:
         raise AuthError("unresolvable_signing_key") from error
 
@@ -93,3 +96,7 @@ def verify_token(
         raise AuthError("insufficient_scope")
 
     return Principal(subject=claims["oid"], app_roles=frozenset(claims.get("roles", [])))
+
+
+def _failure_kind(error: PyJWKClientConnectionError) -> str:
+    return type(error.__cause__ or error).__name__

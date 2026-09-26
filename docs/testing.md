@@ -6,16 +6,16 @@
 
 | パス | 役割 |
 |---|---|
-| `functions/sdui_api/tests/conftest.py` | 共通の fixture（署名鍵、トークン生成、UI定義） |
-| `functions/sdui_api/tests/test_auth.py` | JWT 検証の分岐 |
-| `functions/sdui_api/tests/test_function_app.py` | 本番 HTTP 入口の認証・解決・条件付き取得・エラー応答の契約 |
-| `functions/sdui_api/tests/test_ui_repository.py` | Cosmos DB の profile 欠落を空 profile に変換する境界 |
+| `functions/sdui_api/tests/conftest.py` | 共通の fixture（署名鍵、トークン生成、設定用の環境変数、クエリ応答の模擬） |
+| `functions/sdui_api/tests/test_auth.py` | JWT 検証の分岐、JWKS 取得失敗の分類、JWKS クライアントの timeout |
+| `functions/sdui_api/tests/test_function_app.py` | 本番 HTTP 入口の認証・解決・条件付き取得・エラー応答（401 / 404 / 500 / 503）の契約 |
+| `functions/sdui_api/tests/test_ui_repository.py` | Cosmos DB の profile 欠落を空 profile に変換する境界、SDK 例外の一時障害・恒常的失敗への分類、クライアントの timeout・再試行設定 |
 | `functions/sdui_api/tests/test_ui_resolver.py` | 解決フローの優先順位 |
 | `functions/sdui_api/tests/test_seed_documents.py` | `seed/` の全ファイルが登録前検証に通り、初期データが解決できること |
 | `functions/sdui_api/tests/test_seed_validation.py` | 保存文書の JSON Schema と、ID 整合・兄弟間の ID 重複の検証規則 |
 | `functions/sdui_api/tests/test_seed_cosmos.py` | 登録スクリプトの dry-run と、不正データがあるときに書き込まないこと |
 | `functions/sdui_api/tests/test_dev_server.py` | モックサーバーの解決結果とヘッダー解釈 |
-| `functions/sdui_api/tests/test_constants.py` | `ROLE_ENTITLEMENTS` の解釈 |
+| `functions/sdui_api/tests/test_constants.py` | `ROLE_ENTITLEMENTS` の解釈、設定読込の失敗（欠落・変換失敗）で値を出さないこと |
 
 実行は `pytest` です。`pyproject.toml` の `pythonpath` により `functions/sdui_api` を import できます。
 
@@ -28,6 +28,8 @@
 - `test_dev_server.py` はモックサーバーの解決処理とヘッダー値解釈を検証し、モックのHTTPハンドラー自体は呼び出しません。`test_function_app.py` は本番の入口関数を直接呼び、その応答オブジェクトを検証します。Functionsホストを起動するHTTP通信テストではありません。
 - `If-None-Match` は現在 ETag との文字列完全一致のみを判定します。弱い ETag・複数値・`*` の扱いは入口テストで現状の制約として固定します。
 - 登録前検証は `tmp_path` に作った seed で検証し、Cosmos DB クライアントと資格情報は記録用の偽物に差し替えます。dry-run ではどちらも生成されないことを確認します。
+- 外部サービスの障害は、SDK の例外を差し替えた container や鍵解決から発生させます。一時障害が 503、恒常的な失敗が 500 になり、404 や空の profile にならないこと、本文がエラーコードのみであること、ログにトークンと `oid` が出ないことを確認します。
+- 設定読込の失敗は環境変数を書き換えて再現します。`load_settings()` のキャッシュはケースごとにクリアし（`settings_environment` fixture）、JWKS と Cosmos DB の呼び出しへ進まないことを確認します。
 - 認証の失敗系は、期限切れ、audience 不一致、issuer 不一致、scope 不足を最低限カバーします。
 - UI出し分けは、entitlement 不足による除外と、variant の上書き順序を必ず検証します。
 

@@ -3,7 +3,8 @@ import logging
 import azure.functions as func
 
 from auth import AuthError, extract_bearer_token, jwks_key_resolver, verify_token
-from constants import load_settings
+from constants import SettingsError, load_settings
+from dependency_errors import DependencyError, DependencyUnavailableError
 from response import cache_headers, error_response, json_response, not_modified
 from ui_repository import fetch_latest_definition, fetch_profile
 from ui_resolver import etag_of, resolve
@@ -14,8 +15,26 @@ logger = logging.getLogger(__name__)
 
 @app.route(route="ui/{surface}", methods=["GET"])
 def get_ui_schema(req: func.HttpRequest) -> func.HttpResponse:
-    settings = load_settings()
     surface = req.route_params.get("surface", "")
+
+    try:
+        return _serve(req, surface)
+    except SettingsError as error:
+        logger.error("settings unavailable surface=%s variable=%s problem=%s", surface, error.variable, error.problem)
+        return error_response(500, "internal_error")
+    except DependencyUnavailableError as error:
+        logger.warning("dependency unavailable surface=%s dependency=%s detail=%s", surface, error.dependency, error.detail)
+        return error_response(503, "service_unavailable")
+    except DependencyError as error:
+        logger.error("dependency failed surface=%s dependency=%s detail=%s", surface, error.dependency, error.detail)
+        return error_response(500, "internal_error")
+    except Exception:
+        logger.exception("unexpected ui request failure surface=%s", surface)
+        return error_response(500, "internal_error")
+
+
+def _serve(req: func.HttpRequest, surface: str) -> func.HttpResponse:
+    settings = load_settings()
 
     try:
         token = extract_bearer_token(req.headers.get("Authorization"))
