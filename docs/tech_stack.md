@@ -47,6 +47,8 @@
 | JWT | `PyJWT[crypto]` による Entra ID トークン検証 |
 | Lint / format | `ruff` |
 | Test | `pytest` |
+| Dependency locks | Python 3.12 向け `uv==0.12.19` の universal resolution。実行時は `functions/sdui_api/requirements.txt`、開発時はこれに `requirements-dev.txt` を追加 |
+| CI package installer | `pip==26.1.2` (Linux / Windows)。Azure Functions remote build の pip はCIから制御しない |
 | Auth pattern | Entra ID JWT validation via `auth.py` helpers |
 
 ## CI/CD
