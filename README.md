@@ -13,7 +13,7 @@ Microsoft Entra ID で認証したユーザーのアカウント属性に応じ�
 | `environments/` | 環境ごとの変数ファイル |
 | `config/` | app role と entitlement の定義 |
 | `functions/sdui_api/` | UIスキーマ配信API（Azure Functions / Python） |
-| `seed/` | UI定義とアカウントプロファイルの初期データ |
+| `seed/` | UI定義とアカウントプロファイルの初期データ、保存文書の JSON Schema |
 | `scripts/` | 運用スクリプト |
 | `docs/` | 技術スタック、アーキテクチャ、規約 |
 

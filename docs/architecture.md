@@ -91,6 +91,9 @@ role を割り当てるだけでUIが変わり、profile 文書は個別の上�
 
 `userId` は Entra ID の `oid` を使います。`email` や `upn` は識別子に使いません。
 
+保存文書の形状は `seed/schemas/` の JSON Schema で定義し、`scripts/seed_cosmos.py` が登録前に検証します。
+配信時の API は保存文書を検証しません。保存文書と配信 payload はフィールドが異なるため、この schema は配信 payload には使いません。
+
 ## キャッシュ
 
 - レスポンスに `ETag` と `Cache-Control: private, max-age=60` を付与します。

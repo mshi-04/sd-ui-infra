@@ -46,6 +46,7 @@
 | SDK | `azure-cosmos`, `azure-identity` |
 | JWT | `PyJWT[crypto]` による Entra ID トークン検証 |
 | Lint / format | `ruff` |
+| Seed validation | `jsonschema`。`scripts/seed_cosmos.py` の登録前検証だけで使うため、開発依存に置く |
 | Test | `pytest` |
 | Dependency locks | Python 3.12 向け `uv==0.12.19` の universal resolution。実行時は `functions/sdui_api/requirements.txt`、開発時はこれに `requirements-dev.txt` を追加 |
 | CI package installer | `pip==26.1.2` (Linux / Windows)。Azure Functions remote build の pip はCIから制御しない |

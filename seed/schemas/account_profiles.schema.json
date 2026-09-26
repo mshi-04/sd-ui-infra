@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stored account profile",
+  "type": "object",
+  "required": ["id", "userId"],
+  "properties": {
+    "id": { "$ref": "#/$defs/identifier" },
+    "userId": { "$ref": "#/$defs/identifier" },
+    "entitlements": { "$ref": "#/$defs/identifiers" },
+    "audiences": { "$ref": "#/$defs/identifiers" },
+    "preferences": {
+      "type": "object",
+      "properties": {
+        "theme": { "type": "string" },
+        "density": { "type": "string" },
+        "pinnedComponentIds": { "$ref": "#/$defs/identifiers" }
+      }
+    }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "minLength": 1 },
+    "identifiers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/identifier" }
+    }
+  }
+}
