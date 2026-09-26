@@ -49,6 +49,10 @@ role を増やすときは `config/app_roles.json` を編集して apply しま�
 
 検証に失敗した場合は理由を区別せず `401` を返します。失敗理由はログにのみ残します。
 
+JWKS を取得できない場合（接続失敗、timeout、JWKS の HTTP エラー）はトークンの正否を判定できないため、`401` ではなく `503` を返し、Cosmos DB へは進みません。
+取得の timeout は3秒です（PyJWT の既定値は30秒）。鍵は `kid` ごとにキャッシュされるため、JWKS の障害が影響するのは未取得の鍵を使うトークンです。
+上限値の根拠と応答の分類は [アーキテクチャ](architecture.md#外部サービス障害時の応答) を参照してください。
+
 ## Azure リソースへの認可
 
 - Function App は system-assigned managed identity を持ちます。
@@ -61,3 +65,6 @@ role を増やすときは `config/app_roles.json` を編集して apply しま�
 - access token、`upn`、`email`、氏名をログに出さないでください。
 - `oid` はハッシュ化して出力します（`auth.mask_subject`）。
 - 401 / 403 のログには surface と検証失敗の分類のみを残します。
+- 外部サービス障害（500 / 503）のログには、surface、依存先（`jwks`、`cosmos.<container>`）、例外の型と HTTP status のみを残します。Cosmos DB の例外メッセージには文書のパス（`oid` を含む）が入り得るため、メッセージと traceback は出しません。
+- 設定不備のログには環境変数の名前と `missing` / `invalid` の区別のみを残し、値は出しません。変換エラーのメッセージは値を含むため、例外の連鎖も切ります。
+- 想定外の不具合は、原因調査のため `logger.exception` で traceback を残します。トークンの検証失敗と外部サービスの例外はこの経路へ届く前に分類済みで、traceback にはローカル変数が含まれないため、トークンや `oid` が出ない前提です。例外メッセージに値を含める処理を追加する場合は、この前提を見直してください。

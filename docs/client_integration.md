@@ -21,6 +21,21 @@ GET {base_url}/ui/{surface}
 | 304 | `If-None-Match` が一致。ボディなし |
 | 401 | トークンが無効、または `UiSchema.Read` scope が無い。理由は返さない |
 | 404 | 未知の surface |
+| 500 | サーバー側の設定不備、保存データの不備、想定外の不具合。再試行しても回復しない前提で扱う |
+| 503 | 署名鍵（JWKS）または Cosmos DB へ一時的に到達できない。時間をおいた再試行で回復し得る |
+
+200 と 304 以外は、`{"error": {"code": "<code>"}}` の形の JSON を返します。本文はエラーコードのみで、失敗理由や例外の内容は含めません。
+
+| ステータス | `code` |
+|---|---|
+| 401 | `unauthorized` |
+| 404 | `surface_not_found` |
+| 500 | `internal_error` |
+| 503 | `service_unavailable` |
+
+500 と 503 は、外部サービス障害時の応答を整理した際に追加した契約です。
+外部サービスの障害を 401 や 404、空の profile として返すことはありません。
+503 は `Retry-After` を付けません。再試行する場合はクライアント側で間隔を空け、回数を制限してください。
 
 ## レスポンス
 
@@ -125,6 +140,9 @@ Android アプリはこれらのヘッダーを送らないため、アプリか
 | 未知のキーを無視 | `Json { ignoreUnknownKeys = true }` | `data/di/NetworkModule.kt` |
 | `Authorization` | `MsalAuthClient` が取得した access token を `AuthorizationInterceptor` が付与。トークンが無ければヘッダー無しで送り、401 ならログイン画面へ戻る | `data/remote/AuthorizationInterceptor.kt` |
 | 平文HTTP | `usesCleartextTraffic` は debug マニフェストのみ | `src/debug/AndroidManifest.xml` |
+
+500 と 503 はこの確認より後に追加した契約です。上表の記録では、200 / 304 / 401 / 404 以外は `HttpException` として扱われます。
+その後のアプリが 500 と 503 を区別するか、503 で再試行するかは確認していません。
 
 base URL と scope は `gradle.properties` の `API_BASE_URL` と `API_SCOPE` で指定し、既定は dev の実APIです。
 モックサーバーへ接続する場合の起動例です。
