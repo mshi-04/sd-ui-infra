@@ -8,6 +8,8 @@
 |---|---|
 | `functions/sdui_api/tests/conftest.py` | 共通の fixture（署名鍵、トークン生成、UI定義） |
 | `functions/sdui_api/tests/test_auth.py` | JWT 検証の分岐 |
+| `functions/sdui_api/tests/test_function_app.py` | 本番 HTTP 入口の認証・解決・条件付き取得・エラー応答の契約 |
+| `functions/sdui_api/tests/test_ui_repository.py` | Cosmos DB の profile 欠落を空 profile に変換する境界 |
 | `functions/sdui_api/tests/test_ui_resolver.py` | 解決フローの優先順位 |
 | `functions/sdui_api/tests/test_seed_documents.py` | `seed/` の初期データが解決できること |
 | `functions/sdui_api/tests/test_dev_server.py` | モックサーバーの解決結果とヘッダー解釈 |
@@ -20,6 +22,9 @@
 - Cosmos DB と JWKS エンドポイントへの実アクセスはテストに含めません。
 - JWT はテスト内で生成した RSA 鍵で署名し、JWKS はローカルの鍵集合に差し替えます。
 - resolver は純粋関数として、I/O を介さずに検証します。
+- HTTP 入口は `azure.functions.HttpRequest` で呼び出し、Cosmos DB と JWKS の外部通信を差し替えて、ステータス・本文・キャッシュヘッダーを検証します。認証の暗号処理は既存の JWT fixture を再利用します。
+- `test_dev_server.py` はモックサーバーの解決処理とヘッダー値解釈を検証し、モックのHTTPハンドラー自体は呼び出しません。`test_function_app.py` は本番の入口関数を直接呼び、その応答オブジェクトを検証します。Functionsホストを起動するHTTP通信テストではありません。
+- `If-None-Match` は現在 ETag との文字列完全一致のみを判定します。弱い ETag・複数値・`*` の扱いは入口テストで現状の制約として固定します。
 - 認証の失敗系は、期限切れ、audience 不一致、issuer 不一致、scope 不足を最低限カバーします。
 - UI出し分けは、entitlement 不足による除外と、variant の上書き順序を必ず検証します。
 

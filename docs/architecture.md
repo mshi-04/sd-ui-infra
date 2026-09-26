@@ -46,7 +46,7 @@ Cosmos DB for NoSQL
 }
 ```
 
-- `revision` はレスポンスの ETag に対応し、クライアントのキャッシュ判定に使います。
+- `revision` はUI定義の改訂情報です。キャッシュ判定には、利用者向けに解決したpayload全体から生成する ETag を使います。
 - `requiredEntitlements` は解決時に評価され、レスポンスからは取り除かれます。
 
 ## 解決フロー
@@ -94,5 +94,6 @@ role を割り当てるだけでUIが変わり、profile 文書は個別の上�
 ## キャッシュ
 
 - レスポンスに `ETag` と `Cache-Control: private, max-age=60` を付与します。
-- クライアントの `If-None-Match` が一致した場合は `304` を返します。
-- UI定義の更新は `revision` の変更で伝搬します。
+- クライアントの `If-None-Match` が生成した ETag と文字列で完全一致した場合は `304` を返します。
+- 現状は弱い ETag（`W/` 付き）、複数値のリスト、`*` を一致として扱いません。認証済みで対象surfaceが存在する場合は `200` を返します。
+- UI定義の `revision` や解決結果が変わると ETag が変わります。同じ `revision` でも、権限や設定によってpayloadが変われば ETag は変わります。
