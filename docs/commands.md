@@ -30,6 +30,7 @@ py -3.14 -m venv .venv
 .venv\Scripts\python -m pip check
 .venv\Scripts\python -m ruff format --check functions scripts
 .venv\Scripts\python -m ruff check functions scripts
+.venv\Scripts\python -m mypy
 .venv\Scripts\python -m pytest
 ```
 
@@ -42,8 +43,11 @@ python3.14 -m venv .venv
 .venv/bin/python -m pip check
 .venv/bin/python -m ruff format --check functions scripts
 .venv/bin/python -m ruff check functions scripts
+.venv/bin/python -m mypy
 .venv/bin/python -m pytest
 ```
+
+`mypy` は引数なしで実行し、対象範囲と検査レベルは `pyproject.toml` の `[tool.mypy]` から読み込みます。CI も同じコマンドを使います。方針は [コーディング規約](coding_standards.md#type-checking) を参照してください。
 
 依存バージョンを更新するときは、Python 3.14 の環境に `uv==0.12.19` を導入し、リポジトリのルートで次を実行します。直接依存は `functions/sdui_api/requirements.in` と `requirements-dev.in` で管理します。開発用の入力は本番用の固定ファイルを制約として参照します。Windows (PowerShell) の例:
 
@@ -63,7 +67,9 @@ Linux の例:
 
 生成した `.txt` は手編集しません。入力ファイルの変更や更新オプションの指定がなければ、再生成時は既存の固定バージョンが再利用されます。特定の間接依存を更新する場合は、対象の `uv pip compile` コマンドに `--upgrade-package <package-name>` を追加します。全体の更新が必要な場合に限り `--upgrade` を使います。pip の固定バージョンを変更するときは、この文書、`docs/tech_stack.md`、`.github/workflows/ci.yml` を合わせて更新します。uv の固定バージョンを変更するときは、この文書と `docs/tech_stack.md` を合わせて更新します。
 
-生成後は新しい環境で `pip check`、整形、lint、pytest を実行し、CI の Linux / Windows 両ジョブを確認します。`--universal` はOSごとの条件付き依存を記録しますが、各OSでの実行確認の代わりにはなりません。Azure Functions の remote build で使われる pip のバージョンは、このCI設定では固定できません。
+`jsonschema` の固定バージョンを変更するときは、同じバージョン系列の `types-jsonschema` へ合わせて更新します。
+
+生成後は新しい環境で `pip check`、整形、lint、型チェック、pytest を実行し、CI の Linux / Windows 両ジョブを確認します。`--universal` はOSごとの条件付き依存を記録しますが、各OSでの実行確認の代わりにはなりません。Azure Functions の remote build で使われる pip のバージョンは、このCI設定では固定できません。
 
 生成方法の詳細は [uvの依存固定ドキュメント](https://docs.astral.sh/uv/pip/compile/) を参照してください。
 

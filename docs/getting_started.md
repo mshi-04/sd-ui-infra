@@ -11,6 +11,7 @@ terraform fmt -check -recursive
 terraform -chdir=envs/dev init -backend=false
 terraform -chdir=envs/dev validate
 ruff check functions scripts
+python -m mypy
 pytest
 python scripts/seed_cosmos.py --dry-run
 ```

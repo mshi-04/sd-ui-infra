@@ -19,6 +19,8 @@
 
 実行は `pytest` です。`pyproject.toml` の `pythonpath` により `functions/sdui_api` を import できます。
 
+`functions/sdui_api/tests/` は現在 mypy の対象外です。型チェックの対象範囲と方針は [コーディング規約](coding_standards.md#type-checking) を参照してください。
+
 ## 方針
 
 - Cosmos DB と JWKS エンドポイントへの実アクセスはテストに含めません。
