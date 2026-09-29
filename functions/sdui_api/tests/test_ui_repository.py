@@ -85,7 +85,7 @@ def test_latest_definition_query_is_bounded_and_scoped_to_surface(container: Moc
 
     assert definition is not None and definition.revision == "a1b2c3"
     kwargs = container.query_items.call_args.kwargs
-    assert kwargs["query"] == ui_repository.LATEST_DEFINITION_QUERY
+    assert kwargs["query"] == "SELECT TOP 1 * FROM c WHERE c.surface = @surface ORDER BY c.version DESC"
     assert kwargs["parameters"] == [{"name": "@surface", "value": "dashboard"}]
     assert kwargs["partition_key"] == "dashboard"
     assert kwargs["timeout"] == ui_repository.COSMOS_OPERATION_TIMEOUT_SECONDS

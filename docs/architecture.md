@@ -25,7 +25,18 @@ Cosmos DB for NoSQL
 ## Surface
 
 `surface` は出し分けの単位となる画面識別子です（例: `dashboard`, `settings`）。
-1つの surface は1つの base definition を持ち、その上に variant と account profile が重なります。
+1つの surface には複数versionの base definition を保存できます。配信時には最新の1つを選び、その上に variant と account profile が重なります。
+
+### 最新定義の選択
+
+- 本番は対象surfaceのpartition内で `ORDER BY c.version DESC` により先頭の1件を取得します。モックもsurfaceごとに、文字列比較で最大の `version` を選びます。
+- seedのファイル名、読み込み順序、`revision` は最新判定に使いません。
+- `version` は空でない文字列です。現在のseedはゼロ埋めした `YYYY-MM-DD` 形式を使います。この形式なら文字列順と日付順が一致しますが、日付形式の強制や日付としての解析は行いません。
+- 数値順やSemVer順ではありません。例えば文字列 `"9"` は `"10"` より大きくなります。同じsurfaceでは比較規則が揃った表現を使ってください。
+- 同じsurface・versionのseedを複数ファイルに置いた場合は、内容やrevisionが同じでも入力エラーです。最新ではないversionの重複も、モックの読込と登録前検証の両方で検出します。
+- 保存文書の `id` は `{surface}:{version}` です。本番DBで同じsurface・versionの文書をupsertすると同じ保存先を更新します。複数seedのどちらが採用されるかに依存しないよう、登録前に重複を拒否します。
+
+本番クエリの並べ替え仕様は [Cosmos DBのORDER BY](https://learn.microsoft.com/en-us/cosmos-db/query/order-by) を参照してください。単体テストではモックの選択と本番に渡すクエリ・parameter・partition keyを検証し、Cosmos DB自体の並べ替えを実アクセスで検証するものではありません。
 
 ## UIスキーマ
 

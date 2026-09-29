@@ -102,6 +102,8 @@ Azure を使わずに、seed データと本番と同じ resolver でスキー�
 python scripts/dev_server.py --port 8080
 ```
 
+同じsurfaceのseedが複数ある場合は、本番と同じく文字列比較で最大の `version` を選びます。ファイル名と `revision` は選択に使いません。同じsurface・versionを複数ファイルに置くと読込エラーになります。versionの表現と重複時の扱いは [最新定義の選択](architecture.md#最新定義の選択) を参照してください。
+
 トークン検証は行わず、次のヘッダーで利用者を切り替えます。Azure へはデプロイされません。
 
 | ヘッダー | 内容 |

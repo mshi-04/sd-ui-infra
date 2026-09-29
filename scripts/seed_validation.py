@@ -46,6 +46,7 @@ def validate_seed(seed_root: Path = SEED_ROOT) -> SeedReport:
     documents: list[SeedDocument] = []
     errors: list[Finding] = []
     warnings: list[Finding] = []
+    first_definition_file_by_version: dict[tuple[str, str], str] = {}
 
     for directory, rules in RULES_BY_DIRECTORY.items():
         validator = _schema_validator(directory)
@@ -63,6 +64,11 @@ def validate_seed(seed_root: Path = SEED_ROOT) -> SeedReport:
                 continue
 
             rule_errors = [Finding(file, location, message) for location, message in rules.errors(content)]
+            if directory == "ui_definitions":
+                key = (content["surface"], content["version"])
+                first_file = first_definition_file_by_version.setdefault(key, file)
+                if first_file != file:
+                    rule_errors.append(Finding(file, "$.version", f"duplicates surface and version from {first_file}"))
             errors.extend(rule_errors)
             warnings.extend(Finding(file, location, message) for location, message in rules.warnings(content))
             if not rule_errors:

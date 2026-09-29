@@ -125,3 +125,23 @@ def test_upsert_writes_nothing_when_any_file_is_invalid(seed_root, cosmos, capsy
     assert "upserted" not in captured.out
     assert "seed validation failed with 1 error(s); nothing was written" in captured.err
     assert profile["userId"] not in captured.err
+
+
+@pytest.mark.parametrize("dry_run", [False, True])
+def test_duplicate_old_definition_prevents_all_writes_and_client_construction(seed_root, monkeypatch, capsys, dry_run):
+    monkeypatch.setattr(seed_cosmos, "CosmosClient", _refuse_construction)
+    monkeypatch.setattr(seed_cosmos, "DefaultAzureCredential", _refuse_construction)
+    definitions = seed_root / "ui_definitions"
+    document = json.loads((definitions / "dashboard.json").read_text(encoding="utf-8"))
+    old_document = {**document, "id": "dashboard:1", "version": "1"}
+    (definitions / "a-old.json").write_text(json.dumps(old_document), encoding="utf-8")
+    (definitions / "z-duplicate.json").write_text(json.dumps({**old_document, "revision": "different"}), encoding="utf-8")
+    arguments = ["--dry-run"] if dry_run else ["--endpoint", ENDPOINT]
+
+    assert seed_cosmos.main(arguments) == 1
+
+    captured = capsys.readouterr()
+    assert "would upsert" not in captured.out
+    assert "upserted" not in captured.out
+    assert "seed validation failed with 1 error(s); nothing was written" in captured.err
+    assert "duplicates surface and version from seed/ui_definitions/a-old.json" in captured.err
