@@ -22,10 +22,20 @@ CACHE_MAX_AGE_SECONDS = 60
 
 
 def load_definitions() -> dict[str, UiDefinition]:
-    definitions = {}
+    definitions: dict[str, UiDefinition] = {}
+    first_file_by_version: dict[tuple[str, str], str] = {}
     for path in sorted((SEED_ROOT / "ui_definitions").glob("*.json")):
         definition = UiDefinition.from_document(json.loads(path.read_text(encoding="utf-8")))
-        definitions[definition.surface] = definition
+        file = path.relative_to(SEED_ROOT.parent).as_posix()
+        key = (definition.surface, definition.version)
+        first_file = first_file_by_version.get(key)
+        if first_file is not None:
+            raise ValueError(f"{file}: $.version: duplicates surface and version from {first_file}")
+        first_file_by_version[key] = file
+
+        current = definitions.get(definition.surface)
+        if current is None or definition.version > current.version:
+            definitions[definition.surface] = definition
     return definitions
 
 

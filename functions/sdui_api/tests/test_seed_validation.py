@@ -131,6 +131,30 @@ def test_definition_id_must_match_surface_and_version(tmp_path):
     ]
 
 
+@pytest.mark.parametrize("include_newer", [False, True])
+def test_duplicate_surface_and_version_across_files_is_rejected_even_for_an_old_version(tmp_path, include_newer):
+    documents = {
+        "b-first.json": _definition(id="home:1", version="1", revision="r1"),
+        "z-duplicate.json": _definition(id="home:1", version="1", revision="r2"),
+    }
+    if include_newer:
+        documents["a-newest.json"] = _definition(id="home:9", version="9")
+
+    assert _messages(tmp_path, definitions=documents) == [
+        "seed/ui_definitions/z-duplicate.json: $.version: duplicates surface and version from seed/ui_definitions/b-first.json"
+    ]
+
+
+def test_distinct_versions_and_the_same_version_on_different_surfaces_are_accepted(tmp_path):
+    documents = {
+        "home-old.json": _definition(id="home:10", version="10"),
+        "home-new.json": _definition(id="home:9", version="9"),
+        "settings.json": _definition(id="settings:9", surface="settings", version="9"),
+    }
+
+    assert _messages(tmp_path, definitions=documents) == []
+
+
 def test_profile_id_must_match_user_id_without_echoing_identifiers(tmp_path):
     messages = _messages(tmp_path, profiles={"user.json": _profile(id="55555555-5555-5555-5555-555555555555")})
 

@@ -14,7 +14,7 @@
 | `functions/sdui_api/tests/test_seed_documents.py` | `seed/` の全ファイルが登録前検証に通り、初期データが解決できること |
 | `functions/sdui_api/tests/test_seed_validation.py` | 保存文書の JSON Schema と、ID 整合・兄弟間の ID 重複の検証規則 |
 | `functions/sdui_api/tests/test_seed_cosmos.py` | 登録スクリプトの dry-run と、不正データがあるときに書き込まないこと |
-| `functions/sdui_api/tests/test_dev_server.py` | モックサーバーの解決結果とヘッダー解釈 |
+| `functions/sdui_api/tests/test_dev_server.py` | モックサーバーの解決結果、ヘッダー解釈、surfaceごとの最新version選択と定義重複の拒否 |
 | `functions/sdui_api/tests/test_constants.py` | `ROLE_ENTITLEMENTS` の解釈、設定読込の失敗（欠落・変換失敗）で値を出さないこと |
 
 実行は `pytest` です。`pyproject.toml` の `pythonpath` により `functions/sdui_api` を import できます。
@@ -30,6 +30,7 @@
 - `test_dev_server.py` はモックサーバーの解決処理とヘッダー値解釈を検証し、モックのHTTPハンドラー自体は呼び出しません。`test_function_app.py` は本番の入口関数を直接呼び、その応答オブジェクトを検証します。Functionsホストを起動するHTTP通信テストではありません。
 - `If-None-Match` は現在 ETag との文字列完全一致のみを判定します。弱い ETag・複数値・`*` の扱いは入口テストで現状の制約として固定します。
 - 登録前検証は `tmp_path` に作った seed で検証し、Cosmos DB クライアントと資格情報は記録用の偽物に差し替えます。dry-run ではどちらも生成されないことを確認します。
+- 定義選択は、複数version、ファイル名とversionの逆順、複数surface、文字列としてのversion比較、revisionに依存しないことを検証します。同一surface・versionの重複は、最新以外のversionも含めてモックと登録前検証で拒否します。本番側は最新1件を要求するクエリ、parameter、partition keyを確認し、偽物のDBに独自の並べ替えを実装してCosmos DBの動作を検証したとは扱いません。
 - 外部サービスの障害は、SDK の例外を差し替えた container や鍵解決から発生させます。一時障害が 503、恒常的な失敗が 500 になり、404 や空の profile にならないこと、本文がエラーコードのみであること、ログにトークンと `oid` が出ないことを確認します。
 - 設定読込の失敗は環境変数を書き換えて再現します。`load_settings()` のキャッシュはケースごとにクリアし（`settings_environment` fixture）、JWKS と Cosmos DB の呼び出しへ進まないことを確認します。
 - 認証の失敗系は、期限切れ、audience 不一致、issuer 不一致、scope 不足を最低限カバーします。
