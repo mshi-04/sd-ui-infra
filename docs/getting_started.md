@@ -104,3 +104,7 @@ curl -H "Authorization: Bearer <access-token>" \
 
 app role を割り当てていないユーザーでは variant が適用されません。
 出し分けを確認する場合は、Entra ID 側で `SupportAgent` を割り当てるか、account profile の `audiences` に追加します。
+
+## 撤去
+
+環境を片付ける手順は [docs/infrastructure.md](infrastructure.md) の「環境の撤去」を参照してください。
