@@ -65,11 +65,11 @@ Linux の例:
 .venv/bin/uv pip compile --universal --python-version 3.14 requirements-dev.in -o requirements-dev.txt
 ```
 
-生成した `.txt` は手編集しません。入力ファイルの変更や更新オプションの指定がなければ、再生成時は既存の固定バージョンが再利用されます。特定の間接依存を更新する場合は、対象の `uv pip compile` コマンドに `--upgrade-package <package-name>` を追加します。全体の更新が必要な場合に限り `--upgrade` を使います。pip の固定バージョンを変更するときは、この文書、`docs/tech_stack.md`、`.github/workflows/ci.yml` を合わせて更新します。uv の固定バージョンを変更するときは、この文書と `docs/tech_stack.md` を合わせて更新します。
+生成した `.txt` は手編集しません。入力ファイルの変更や更新オプションの指定がなければ、再生成時は既存の固定バージョンが再利用されます。特定の間接依存を更新する場合は、対象の `uv pip compile` コマンドに `--upgrade-package <package-name>` を追加します。全体の更新が必要な場合に限り `--upgrade` を使います。pip の固定バージョンを変更するときは、この文書、`docs/tech_stack.md`、`.github/workflows/ci.yml` を合わせて更新します。uv の固定バージョンを変更するときは、この文書、`docs/tech_stack.md`、`.github/workflows/ci.yml` を合わせて更新します。
 
 `jsonschema` の固定バージョンを変更するときは、同じバージョン系列の `types-jsonschema` へ合わせて更新します。
 
-生成後は新しい環境で `pip check`、整形、lint、型チェック、pytest を実行し、CI の Linux / Windows 両ジョブを確認します。`--universal` はOSごとの条件付き依存を記録しますが、各OSでの実行確認の代わりにはなりません。Azure Functions の remote build で使われる pip のバージョンは、このCI設定では固定できません。
+CI の Linux ジョブは同じコマンドで固定ファイルを再生成し、差分があれば失敗します。生成後は新しい環境で `pip check`、整形、lint、型チェック、pytest を実行し、CI の Linux / Windows 両ジョブを確認します。`--universal` はOSごとの条件付き依存を記録しますが、各OSでの実行確認の代わりにはなりません。Azure Functions の remote build で使われる pip のバージョンは、このCI設定では固定できません。
 
 生成方法の詳細は [uvの依存固定ドキュメント](https://docs.astral.sh/uv/pip/compile/) を参照してください。
 

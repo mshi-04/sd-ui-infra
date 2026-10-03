@@ -8,17 +8,21 @@ on:
 
 permissions:
   contents: read
-  id-token: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   python:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.14"
       - name: Install pinned pip
@@ -27,6 +31,17 @@ jobs:
         run: python -m pip install -r functions/sdui_api/requirements.txt -r requirements-dev.txt
       - name: Check dependencies
         run: python -m pip check
+      - name: Install uv
+        if: runner.os == 'Linux'
+        run: python -m pip install uv==0.12.19
+      - name: Recompile locked dependencies
+        if: runner.os == 'Linux'
+        run: |
+          uv pip compile --universal --python-version 3.14 functions/sdui_api/requirements.in -o functions/sdui_api/requirements.txt
+          uv pip compile --universal --python-version 3.14 requirements-dev.in -o requirements-dev.txt
+      - name: Check locked dependencies are in sync
+        if: runner.os == 'Linux'
+        run: git diff --exit-code functions/sdui_api/requirements.txt requirements-dev.txt
       - name: Check formatting
         run: ruff format --check functions scripts
       - name: Lint
@@ -40,15 +55,16 @@ jobs:
 
   terraform-validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       matrix:
         env: [dev, prod]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - name: Read Terraform version
         id: terraform_version
         run: echo "version=$(cat .terraform-version)" >> "$GITHUB_OUTPUT"
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_version: ${{ steps.terraform_version.outputs.version }}
           terraform_wrapper: false
@@ -62,6 +78,10 @@ jobs:
   terraform-plan:
     needs: terraform-validate
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
     env:
       ARM_USE_OIDC: "true"
       ARM_USE_AZUREAD: "true"
@@ -74,11 +94,11 @@ jobs:
       TF_VAR_app_role_assignments: ${{ vars.DEV_APP_ROLE_ASSIGNMENTS }}
       TF_VAR_pre_authorized_client_ids: ${{ vars.DEV_PRE_AUTHORIZED_CLIENT_IDS }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - name: Read Terraform version
         id: terraform_version
         run: echo "version=$(cat .terraform-version)" >> "$GITHUB_OUTPUT"
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_version: ${{ steps.terraform_version.outputs.version }}
           terraform_wrapper: false

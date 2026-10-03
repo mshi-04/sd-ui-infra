@@ -90,6 +90,15 @@ Android クライアント（sd-ui-app リポジトリ）の `gradle.properties`
 GitHub Actions は Entra ID の workload identity federation でサインインします。
 federated credential は `bootstrap/` が作成し、subject は `pull_request` と `environment:<env>` です。
 
+### ワークフローの運用方針
+
+- OIDC トークン (`id-token: write`) は Azure へサインインするジョブだけに付与します。workflow 全体の権限は `contents: read` です。CD は reusable workflow を呼ぶ側のジョブにも同じ権限を付けます。呼ばれる側は呼び出し側の権限を超えられないためです。
+- CI は同じ ref の古い実行を取り消します。CD は実行中の apply を取り消さず、同じ ref の実行を順番に待たせます。
+- 各ジョブに `timeout-minutes` を設定します。CI は python 15分、terraform-validate 10分、terraform-plan 15分、CD の deploy は30分です。
+- `uses:` は同じメジャーバージョンの最新リリースのコミット SHA で固定し、行末のコメントにリリースタグを残します。更新は Dependabot が行います。
+- Linux の python ジョブで `uv==0.12.19` により固定ファイルを入力から再生成し、差分があれば失敗させます。手順は [コマンド](commands.md) の依存固定を参照してください。
+- Dependabot は github-actions、terraform (`envs/dev`、`envs/prod`、`bootstrap`)、pip (`functions/sdui_api`、ルートの開発依存) を週次で確認します。
+
 `.tfvars` はコミットしないため、CI では変数を GitHub Actions variables から渡します。
 
 | variable | スコープ | 用途 |
