@@ -1,6 +1,7 @@
 import hashlib
 import json
 from collections.abc import Collection, Iterable, Mapping, Sequence
+from dataclasses import replace
 
 from auth import Principal
 from models import AccountProfile, Component, ResolvedUi, UiDefinition
@@ -59,8 +60,8 @@ def _merge(base: Sequence[Component], overrides: Sequence[Component]) -> tuple[C
 def _merge_component(base: Component, override: Component | None) -> Component:
     if override is None:
         return base
-    return Component(
-        id=base.id,
+    return replace(
+        base,
         type=override.type,
         props={**base.props, **override.props},
         required_entitlements=override.required_entitlements or base.required_entitlements,
@@ -70,13 +71,7 @@ def _merge_component(base: Component, override: Component | None) -> Component:
 
 def _filter_by_entitlements(components: Iterable[Component], entitlements: frozenset[str]) -> tuple[Component, ...]:
     return tuple(
-        Component(
-            id=component.id,
-            type=component.type,
-            props=component.props,
-            required_entitlements=component.required_entitlements,
-            children=_filter_by_entitlements(component.children, entitlements),
-        )
+        replace(component, children=_filter_by_entitlements(component.children, entitlements))
         for component in components
         if component.required_entitlements <= entitlements
     )

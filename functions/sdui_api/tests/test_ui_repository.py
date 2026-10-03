@@ -8,9 +8,9 @@ from azure.identity import CredentialUnavailableError
 from conftest import query_returning
 
 import ui_repository
-from constants import Settings
 from dependency_errors import DependencyFailureError, DependencyUnavailableError
 from models import AccountProfile
+from settings import Settings
 
 USER_ID = "missing-user"
 DEFINITION_DOCUMENT = {"surface": "dashboard", "version": "2026-06-01", "revision": "a1b2c3", "components": []}

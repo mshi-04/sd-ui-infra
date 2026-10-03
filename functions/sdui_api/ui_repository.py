@@ -9,9 +9,9 @@ from azure.cosmos import ContainerProxy, CosmosClient
 from azure.cosmos.exceptions import CosmosClientTimeoutError, CosmosHttpResponseError, CosmosResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 
-from constants import Settings
 from dependency_errors import DependencyFailureError, DependencyUnavailableError
 from models import AccountProfile, UiDefinition
+from settings import Settings
 
 LATEST_DEFINITION_QUERY = "SELECT TOP 1 * FROM c WHERE c.surface = @surface ORDER BY c.version DESC"
 

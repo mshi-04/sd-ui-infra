@@ -15,7 +15,7 @@
 | `functions/sdui_api/tests/test_seed_validation.py` | 保存文書の JSON Schema と、ID 整合・兄弟間の ID 重複の検証規則 |
 | `functions/sdui_api/tests/test_seed_cosmos.py` | 登録スクリプトの dry-run と、不正データがあるときに書き込まないこと |
 | `functions/sdui_api/tests/test_dev_server.py` | モックサーバーの解決結果、ヘッダー解釈、surfaceごとの最新version選択と定義重複の拒否 |
-| `functions/sdui_api/tests/test_constants.py` | `ROLE_ENTITLEMENTS` の解釈、設定読込の失敗（欠落・変換失敗）で値を出さないこと |
+| `functions/sdui_api/tests/test_settings.py` | `ROLE_ENTITLEMENTS` の解釈、設定読込の失敗（欠落・変換失敗）で値を出さないこと |
 
 実行は `pytest` です。`pyproject.toml` の `pythonpath` により `functions/sdui_api` を import できます。
 

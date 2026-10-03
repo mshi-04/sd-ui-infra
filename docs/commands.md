@@ -79,6 +79,8 @@ CI の Linux ジョブは同じコマンドで固定ファイルを再生成し�
 func start --script-root functions/sdui_api
 ```
 
+`functions/sdui_api/local.settings.json.example` を `functions/sdui_api/local.settings.json`（git 管理外）へコピーし、プレースホルダーを埋めてから実行します。
+
 ## Seed
 
 `scripts/seed_cosmos.py` は `seed/ui_definitions/` と `seed/account_profiles/` の全ファイルを検証し、すべて成功した場合だけ Cosmos DB へ upsert します。実行には上記の `requirements.txt` と `requirements-dev.txt` の両方が必要です。

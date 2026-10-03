@@ -11,6 +11,7 @@ sys.path.insert(0, str(REPOSITORY_ROOT / "functions" / "sdui_api"))
 
 from auth import Principal
 from models import AccountProfile, ResolvedUiPayload, UiDefinition
+from settings import DEFAULT_CACHE_MAX_AGE_SECONDS
 from ui_resolver import etag_of, resolve
 
 SEED_ROOT = REPOSITORY_ROOT / "seed"
@@ -18,7 +19,6 @@ APP_ROLES_PATH = REPOSITORY_ROOT / "config" / "app_roles.json"
 ROUTE_PREFIX = "/api/ui/"
 OID_HEADER = "X-Dev-Oid"
 ROLES_HEADER = "X-Dev-Roles"
-CACHE_MAX_AGE_SECONDS = 60
 
 
 def load_definitions() -> dict[str, UiDefinition]:
@@ -105,7 +105,7 @@ class UiSchemaHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(content_length))
         if etag:
             self.send_header("ETag", etag)
-            self.send_header("Cache-Control", f"private, max-age={CACHE_MAX_AGE_SECONDS}")
+            self.send_header("Cache-Control", f"private, max-age={DEFAULT_CACHE_MAX_AGE_SECONDS}")
         self.end_headers()
 
 

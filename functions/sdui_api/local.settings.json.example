@@ -10,6 +10,7 @@
     "COSMOS_DATABASE": "sdui",
     "UI_DEFINITIONS_CONTAINER": "ui_definitions",
     "ACCOUNT_PROFILES_CONTAINER": "account_profiles",
-    "UI_CACHE_MAX_AGE_SECONDS": "60"
+    "UI_CACHE_MAX_AGE_SECONDS": "60",
+    "ROLE_ENTITLEMENTS": "{\"UiAdmin\":[\"billing.read\",\"billing.write\",\"support.read\"],\"BillingViewer\":[\"billing.read\"],\"SupportAgent\":[\"support.read\"]}"
   }
 }

@@ -8,7 +8,6 @@ import jwt
 from jwt import PyJWKClient
 from jwt.exceptions import PyJWKClientConnectionError
 
-from constants import SUBJECT_MASK_LENGTH
 from dependency_errors import DependencyUnavailableError
 
 KeyResolver = Callable[[str], Any]
@@ -17,6 +16,7 @@ BEARER_PREFIX = "Bearer "
 SIGNING_ALGORITHMS = ["RS256"]
 REQUIRED_CLAIMS = ["exp", "nbf", "iss", "aud", "oid"]
 JWKS_DEPENDENCY = "jwks"
+SUBJECT_MASK_LENGTH = 12
 JWKS_FETCH_TIMEOUT_SECONDS = 3
 
 

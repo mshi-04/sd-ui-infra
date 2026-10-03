@@ -14,8 +14,8 @@ from jwt.exceptions import PyJWKClientConnectionError
 
 import function_app
 import ui_repository
-from constants import Settings
 from models import AccountProfile, UiDefinition
+from settings import Settings
 
 
 @pytest.fixture
