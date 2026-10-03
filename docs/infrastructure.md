@@ -23,7 +23,7 @@
 |---|---|
 | `identity` | Entra ID の API app / client app、scope、app role |
 | `ui_store` | Cosmos DB account、database、container |
-| `observability` | Log Analytics workspace、Application Insights |
+| `observability` | Log Analytics workspace、Application Insights、API 5xx アラート（通知先設定時のみ） |
 | `sdui_api` | Storage Account、Flex Consumption plan、Function App、role assignment |
 
 モジュール内に `provider` ブロックと環境分岐を置きません。差異は `envs/*` から変数で渡します。
@@ -54,6 +54,7 @@ Entra ID のアプリケーション定義は組織のテナントに影響し�
 | リソース削除保護 | なし | なし |
 | Function App のスケール上限 | 40 | 100 |
 | ログ保持 | 30日 | 90日 |
+| API 5xx アラート | なし | 通知先設定時に有効（5分間に5件超でメール通知。閾値は未検証） |
 
 Terraform は両環境とも削除保護を設定していません。`prevent_destroy` も管理ロックも定義していないため、`terraform destroy` と手動削除は止まりません。
 保護が必要な場合は、運用者が `CanNotDelete` ロックをリソースグループへ手動で追加します。
@@ -112,6 +113,7 @@ federated credential は `bootstrap/` が作成し、subject は `pull_request` 
 | `DEV_APP_ROLE_ASSIGNMENTS` / `DEV_PRE_AUTHORIZED_CLIENT_IDS` | repository | PR時の dev plan に使う role 割り当てと事前承認クライアント |
 | `PUBLIC_CLIENT_REDIRECT_URIS` / `ALLOWED_ORIGINS` | environment (`dev`, `prod`) | 環境ごとのクライアント設定 |
 | `APP_ROLE_ASSIGNMENTS` / `PRE_AUTHORIZED_CLIENT_IDS` | environment (`dev`, `prod`) | 環境ごとの role 割り当てと事前承認クライアント |
+| `ALERT_EMAIL_ADDRESSES` | environment (`prod`) | 5xx アラートの通知先メールアドレスの JSON 配列。未設定ならアラートなし |
 
 リスト型の variable は `["https://app.example.com"]` の形式で登録します。
 `APP_ROLE_ASSIGNMENTS` は `{"<object-id>":["BillingViewer"]}` の形式、`PRE_AUTHORIZED_CLIENT_IDS` はリスト型の形式で登録します。
