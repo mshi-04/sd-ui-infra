@@ -66,6 +66,7 @@ module "observability" {
   resource_group_name   = data.azurerm_resource_group.sdui.name
   location              = data.azurerm_resource_group.sdui.location
   log_retention_in_days = 90
+  alert_email_addresses = var.alert_email_addresses
 }
 
 module "sdui_api" {

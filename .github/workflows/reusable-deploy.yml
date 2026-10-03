@@ -28,6 +28,7 @@ jobs:
       TF_VAR_allowed_origins: ${{ vars.ALLOWED_ORIGINS }}
       TF_VAR_app_role_assignments: ${{ vars.APP_ROLE_ASSIGNMENTS }}
       TF_VAR_pre_authorized_client_ids: ${{ vars.PRE_AUTHORIZED_CLIENT_IDS }}
+      TF_VAR_alert_email_addresses: ${{ vars.ALERT_EMAIL_ADDRESSES || '[]' }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - name: Read Terraform version

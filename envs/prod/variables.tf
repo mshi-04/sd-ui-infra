@@ -30,3 +30,9 @@ variable "pre_authorized_client_ids" {
   type        = list(string)
   default     = []
 }
+
+variable "alert_email_addresses" {
+  description = "API の 5xx 応答アラートの通知先メールアドレス。空の場合はアラートを作成しない"
+  type        = list(string)
+  default     = []
+}
