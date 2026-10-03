@@ -51,9 +51,39 @@ Entra ID のアプリケーション定義は組織のテナントに影響し�
 |---|---|---|
 | Cosmos DB | serverless | serverless |
 | Cosmos DB backup | Periodic（4時間間隔 / 8時間保持 / Local） | Continuous（7日） |
-| リソース削除保護 | 無効 | 有効 |
+| リソース削除保護 | なし | なし |
 | Function App のスケール上限 | 40 | 100 |
 | ログ保持 | 30日 | 90日 |
+
+Terraform は両環境とも削除保護を設定していません。`prevent_destroy` も管理ロックも定義していないため、`terraform destroy` と手動削除は止まりません。
+保護が必要な場合は、運用者が `CanNotDelete` ロックをリソースグループへ手動で追加します。
+CI用アプリケーションには、ワークロード用リソースグループの `Contributor` と条件付きの `Role Based Access Control Administrator` を付与しています。
+`Contributor` は `Microsoft.Authorization` の書き込みを許可しないため、ロックの作成と削除は運用者が行います。
+
+## 環境の撤去
+
+撤去は、作成の逆順に行います。
+
+1. `envs/prod` と `envs/dev` を、それぞれの tfvars を指定して `terraform destroy` する
+2. `bootstrap/` を `terraform destroy` する
+
+`envs/*` はリソースグループを `data` 参照するだけで、作成と削除は `bootstrap/` が担います。
+`bootstrap/` を先に destroy すると、`envs/*` の state を保持する Storage Account が消え、`envs/*` を destroy できなくなります。
+`bootstrap/` は local state のため、destroy が終わるまで state ファイルを保管します。
+
+Application Insights は、リソースグループに `Application Insights Smart Detection` という action group を自動で作成します。
+このリソースは Terraform の state に含まれず、リソースグループの削除を妨げます。
+`bootstrap/` を destroy する前に、`envs/*` ごとに次のコマンドで削除します。
+
+```bash
+az monitor action-group delete -g <workload-resource-group> -n "Application Insights Smart Detection"
+```
+
+撤去後に再構築すると、Entra ID のアプリケーション登録には新しい client id が採番されます。
+Android クライアント（sd-ui-app リポジトリ）の `gradle.properties` と MSAL 設定を、新しい output の値へ更新してください。
+詳細は [docs/client_integration.md](client_integration.md) を参照してください。
+
+テストユーザーは Terraform の管理対象外です。Entra ID 側に残るため、不要であれば手動で削除します。
 
 ## CI/CD
 
