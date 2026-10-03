@@ -71,6 +71,8 @@ jobs:
       TF_VAR_subscription_id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       TF_VAR_public_client_redirect_uris: ${{ vars.DEV_PUBLIC_CLIENT_REDIRECT_URIS }}
       TF_VAR_allowed_origins: ${{ vars.DEV_ALLOWED_ORIGINS }}
+      TF_VAR_app_role_assignments: ${{ vars.DEV_APP_ROLE_ASSIGNMENTS }}
+      TF_VAR_pre_authorized_client_ids: ${{ vars.DEV_PRE_AUTHORIZED_CLIENT_IDS }}
     steps:
       - uses: actions/checkout@v5
       - name: Read Terraform version
