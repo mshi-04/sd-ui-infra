@@ -11,7 +11,7 @@
 | `functions/sdui_api/tests/test_function_app.py` | 本番 HTTP 入口の認証・解決・条件付き取得・エラー応答（401 / 404 / 500 / 503）の契約 |
 | `functions/sdui_api/tests/test_ui_repository.py` | Cosmos DB の profile 欠落を空 profile に変換する境界、SDK 例外の一時障害・恒常的失敗への分類、クライアントの timeout・再試行設定 |
 | `functions/sdui_api/tests/test_ui_resolver.py` | 解決フローの優先順位 |
-| `functions/sdui_api/tests/test_seed_documents.py` | `seed/` の全ファイルが登録前検証に通り、初期データが解決できること |
+| `functions/sdui_api/tests/test_seed_documents.py` | `seed/` の全ファイルが登録前検証に通り、初期データが解決できること。variant の audience と requiredEntitlements が `config/app_roles.json` の role か seed の profile で定義されていること |
 | `functions/sdui_api/tests/test_seed_validation.py` | 保存文書の JSON Schema と、ID 整合・兄弟間の ID 重複の検証規則 |
 | `functions/sdui_api/tests/test_seed_cosmos.py` | 登録スクリプトの dry-run と、不正データがあるときに書き込まないこと |
 | `functions/sdui_api/tests/test_dev_server.py` | モックサーバーの解決結果、ヘッダー解釈、surfaceごとの最新version選択と定義重複の拒否 |
