@@ -69,8 +69,14 @@ federated credential は `bootstrap/` が作成し、subject は `pull_request` 
 | `AZURE_SUBSCRIPTION_ID` | repository | サブスクリプションID |
 | `TFSTATE_RESOURCE_GROUP_NAME` | repository | state 用リソースグループ名 |
 | `TFSTATE_STORAGE_ACCOUNT_NAME` | repository | state 用 Storage Account 名 |
-| `DEV_SPA_REDIRECT_URIS` / `DEV_ALLOWED_ORIGINS` | repository | PR時の dev plan に使う値 |
-| `SPA_REDIRECT_URIS` / `ALLOWED_ORIGINS` | environment (`dev`, `prod`) | 環境ごとのクライアント設定 |
+| `DEV_PUBLIC_CLIENT_REDIRECT_URIS` / `DEV_ALLOWED_ORIGINS` | repository | PR時の dev plan に使う値 |
+| `DEV_APP_ROLE_ASSIGNMENTS` / `DEV_PRE_AUTHORIZED_CLIENT_IDS` | repository | PR時の dev plan に使う role 割り当てと事前承認クライアント |
+| `PUBLIC_CLIENT_REDIRECT_URIS` / `ALLOWED_ORIGINS` | environment (`dev`, `prod`) | 環境ごとのクライアント設定 |
+| `APP_ROLE_ASSIGNMENTS` / `PRE_AUTHORIZED_CLIENT_IDS` | environment (`dev`, `prod`) | 環境ごとの role 割り当てと事前承認クライアント |
 
 リスト型の variable は `["https://app.example.com"]` の形式で登録します。
+`APP_ROLE_ASSIGNMENTS` は `{"<object-id>":["BillingViewer"]}` の形式、`PRE_AUTHORIZED_CLIENT_IDS` はリスト型の形式で登録します。
+値はローカルの tfvars と一致させます。CD の apply が差分として割り当てと事前承認を削除するためです。
+割り当てるものがない場合も `{}` / `[]` を登録します。
+未登録の variable は空文字として渡され、Terraform が値を解釈できず plan が失敗します。既定値では実行されません。
 `prod` の GitHub Environment には required reviewers を設定し、手動承認を必須にします。

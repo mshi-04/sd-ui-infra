@@ -14,7 +14,7 @@ output "api_service_principal_object_id" {
 }
 
 output "client_app_client_id" {
-  description = "SPA クライアントの client id"
+  description = "Android クライアントの client id"
   value       = azuread_application.client.client_id
 }
 
