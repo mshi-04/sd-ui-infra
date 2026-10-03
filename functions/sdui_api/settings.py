@@ -6,7 +6,6 @@ from functools import lru_cache
 
 DEFAULT_SCOPE = "UiSchema.Read"
 DEFAULT_CACHE_MAX_AGE_SECONDS = 60
-SUBJECT_MASK_LENGTH = 12
 
 
 class SettingsError(Exception):

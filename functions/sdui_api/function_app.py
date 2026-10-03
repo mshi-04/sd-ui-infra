@@ -3,9 +3,9 @@ import logging
 import azure.functions as func
 
 from auth import AuthError, extract_bearer_token, jwks_key_resolver, verify_token
-from constants import SettingsError, load_settings
 from dependency_errors import DependencyError, DependencyUnavailableError
 from response import cache_headers, error_response, json_response, not_modified
+from settings import SettingsError, load_settings
 from ui_repository import fetch_latest_definition, fetch_profile
 from ui_resolver import etag_of, resolve
 

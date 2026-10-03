@@ -1,7 +1,12 @@
 import pytest
 
-import constants
-from constants import SettingsError, parse_role_entitlements
+from settings import (
+    DEFAULT_CACHE_MAX_AGE_SECONDS,
+    DEFAULT_SCOPE,
+    SettingsError,
+    load_settings,
+    parse_role_entitlements,
+)
 
 
 def test_role_entitlements_are_parsed_into_sets():
@@ -29,10 +34,10 @@ def test_malformed_role_entitlements_are_rejected(document: str):
 
 
 def test_settings_default_optional_values(settings_environment: pytest.MonkeyPatch):
-    settings = constants.load_settings()
+    settings = load_settings()
 
-    assert settings.required_scope == constants.DEFAULT_SCOPE
-    assert settings.cache_max_age_seconds == constants.DEFAULT_CACHE_MAX_AGE_SECONDS
+    assert settings.required_scope == DEFAULT_SCOPE
+    assert settings.cache_max_age_seconds == DEFAULT_CACHE_MAX_AGE_SECONDS
     assert settings.role_entitlements == {}
 
 
@@ -40,7 +45,7 @@ def test_missing_variable_is_reported_by_name(settings_environment: pytest.Monke
     settings_environment.delenv("COSMOS_DATABASE")
 
     with pytest.raises(SettingsError) as error:
-        constants.load_settings()
+        load_settings()
 
     assert (error.value.variable, error.value.problem) == ("COSMOS_DATABASE", "missing")
 
@@ -56,7 +61,7 @@ def test_invalid_variable_is_reported_without_its_value(name: str, value: str, s
     settings_environment.setenv(name, value)
 
     with pytest.raises(SettingsError) as error:
-        constants.load_settings()
+        load_settings()
 
     assert (error.value.variable, error.value.problem) == (name, "invalid")
     assert error.value.__cause__ is None

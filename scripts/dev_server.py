@@ -10,8 +10,8 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "functions" / "sdui_api"))
 
 from auth import Principal
-from constants import DEFAULT_CACHE_MAX_AGE_SECONDS
 from models import AccountProfile, ResolvedUiPayload, UiDefinition
+from settings import DEFAULT_CACHE_MAX_AGE_SECONDS
 from ui_resolver import etag_of, resolve
 
 SEED_ROOT = REPOSITORY_ROOT / "seed"
