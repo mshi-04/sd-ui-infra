@@ -69,7 +69,7 @@ jobs:
       ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       TF_VAR_subscription_id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-      TF_VAR_spa_redirect_uris: ${{ vars.DEV_SPA_REDIRECT_URIS }}
+      TF_VAR_public_client_redirect_uris: ${{ vars.DEV_PUBLIC_CLIENT_REDIRECT_URIS }}
       TF_VAR_allowed_origins: ${{ vars.DEV_ALLOWED_ORIGINS }}
     steps:
       - uses: actions/checkout@v5
