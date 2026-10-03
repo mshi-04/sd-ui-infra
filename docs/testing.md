@@ -35,6 +35,7 @@
 - 設定読込の失敗は環境変数を書き換えて再現します。`load_settings()` のキャッシュはケースごとにクリアし（`settings_environment` fixture）、JWKS と Cosmos DB の呼び出しへ進まないことを確認します。
 - 認証の失敗系は、期限切れ、audience 不一致、issuer 不一致、scope 不足を最低限カバーします。
 - UI出し分けは、entitlement 不足による除外と、variant の上書き順序を必ず検証します。
+- 警告はエラーとして扱います（`filterwarnings = ["error"]`）。無視が必要な場合は対象を絞り、理由を添えます。
 
 ## 追加時の基準
 
