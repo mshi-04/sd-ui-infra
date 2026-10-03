@@ -74,3 +74,48 @@ def test_configured_roles_open_the_seeded_components(dashboard):
     )
 
     assert "billing-summary" in [component.id for component in resolved.components]
+
+
+def _seed_ui_definitions() -> list[dict]:
+    return [json.loads(path.read_text(encoding="utf-8")) for path in sorted((SEED_ROOT / "ui_definitions").glob("*.json"))]
+
+
+def _seed_account_profiles() -> list[dict]:
+    return [json.loads(path.read_text(encoding="utf-8")) for path in sorted((SEED_ROOT / "account_profiles").glob("*.json"))]
+
+
+def _walk_components(components: list[dict]):
+    for component in components:
+        yield component
+        yield from _walk_components(component.get("children", []))
+
+
+def _all_seed_components(definition: dict):
+    yield from _walk_components(definition["components"])
+    for variant in definition.get("variants", []):
+        yield from _walk_components(variant["components"])
+
+
+def test_seed_variant_audiences_are_defined_roles_or_profile_audiences():
+    known = set(_role_entitlements())
+    for profile in _seed_account_profiles():
+        known.update(profile.get("audiences", []))
+
+    audiences = {variant["audience"] for definition in _seed_ui_definitions() for variant in definition.get("variants", [])}
+
+    assert sorted(audiences - known) == []
+
+
+def test_seed_required_entitlements_are_granted_by_a_role_or_a_profile():
+    granted = {entitlement for entitlements in _role_entitlements().values() for entitlement in entitlements}
+    for profile in _seed_account_profiles():
+        granted.update(profile.get("entitlements", []))
+
+    required = {
+        entitlement
+        for definition in _seed_ui_definitions()
+        for component in _all_seed_components(definition)
+        for entitlement in component.get("requiredEntitlements", [])
+    }
+
+    assert sorted(required - granted) == []

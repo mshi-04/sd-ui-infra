@@ -5,6 +5,9 @@ src = ["functions/sdui_api", "scripts"]
 [tool.pytest.ini_options]
 pythonpath = ["functions/sdui_api", "scripts"]
 testpaths = ["functions/sdui_api/tests"]
+addopts = ["--strict-markers", "--strict-config"]
+xfail_strict = true
+filterwarnings = ["error"]
 
 [tool.mypy]
 python_version = "3.14"

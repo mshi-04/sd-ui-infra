@@ -163,3 +163,150 @@ def test_unknown_role_grants_nothing(definition):
     resolved = _resolve(definition, AccountProfile.empty("user-oid"), _principal("Unmapped"))
 
     assert _component_ids(resolved) == ["usage-summary"]
+
+
+def _definition(components: list[dict], variants: list[dict] | None = None) -> UiDefinition:
+    return UiDefinition.from_document(
+        {
+            "surface": "dashboard",
+            "version": "2026-06-01",
+            "revision": "r1",
+            "components": components,
+            "variants": variants or [],
+        }
+    )
+
+
+def _card(component_id: str, **fields) -> dict:
+    return {"id": component_id, "type": "Card", "props": {}, **fields}
+
+
+def _find(resolved, component_id: str):
+    return next(component for component in resolved.components if component.id == component_id)
+
+
+def test_later_variant_wins_conflicting_props_and_additions_follow_definition_order():
+    definition = _definition(
+        [_card("base", props={"title": "Base", "span": 6})],
+        [
+            {
+                "audience": "SupportAgent",
+                "components": [
+                    {"id": "base", "type": "Card", "props": {"title": "Support"}},
+                    _card("support-banner"),
+                ],
+            },
+            {
+                "audience": "UiAdmin",
+                "components": [
+                    {"id": "base", "type": "Card", "props": {"title": "Admin"}},
+                    _card("admin-panel"),
+                ],
+            },
+        ],
+    )
+    profile = AccountProfile(user_id="user-oid", audiences=frozenset({"SupportAgent", "UiAdmin"}))
+
+    resolved = _resolve(definition, profile, _principal())
+
+    assert _component_ids(resolved) == ["base", "support-banner", "admin-panel"]
+    assert dict(_find(resolved, "base").props) == {"title": "Admin", "span": 6}
+
+
+def test_variant_without_required_entitlements_keeps_the_base_requirement():
+    definition = _definition(
+        [_card("billing", requiredEntitlements=["billing.read"])],
+        [{"audience": "SupportAgent", "components": [{"id": "billing", "type": "Card", "props": {"title": "Support"}}]}],
+    )
+    profile = AccountProfile(user_id="user-oid", audiences=frozenset({"SupportAgent"}))
+
+    resolved = _resolve(definition, profile, _principal())
+
+    assert _component_ids(resolved) == []
+
+
+def test_variant_required_entitlements_replace_the_base_requirement():
+    definition = _definition(
+        [_card("billing", requiredEntitlements=["billing.read"])],
+        [
+            {
+                "audience": "SupportAgent",
+                "components": [_card("billing", requiredEntitlements=["support.read"])],
+            }
+        ],
+    )
+    profile = AccountProfile(user_id="user-oid", audiences=frozenset({"SupportAgent"}), entitlements=frozenset({"support.read"}))
+
+    resolved = _resolve(definition, profile, _principal())
+
+    assert _component_ids(resolved) == ["billing"]
+
+
+def test_variant_child_is_appended_after_base_children():
+    definition = _definition(
+        [_card("parent", children=[_card("first"), _card("second")])],
+        [{"audience": "SupportAgent", "components": [_card("parent", children=[_card("added")])]}],
+    )
+    profile = AccountProfile(user_id="user-oid", audiences=frozenset({"SupportAgent"}))
+
+    resolved = _resolve(definition, profile, _principal())
+
+    assert [child.id for child in _find(resolved, "parent").children] == ["first", "second", "added"]
+
+
+def test_variant_type_replaces_the_base_type_while_props_are_shallow_merged():
+    definition = _definition(
+        [{"id": "widget", "type": "Card", "props": {"title": "Base", "options": {"a": 1, "b": 2}}}],
+        [
+            {
+                "audience": "SupportAgent",
+                "components": [{"id": "widget", "type": "Banner", "props": {"options": {"a": 9}}}],
+            }
+        ],
+    )
+    profile = AccountProfile(user_id="user-oid", audiences=frozenset({"SupportAgent"}))
+
+    widget = _find(_resolve(definition, profile, _principal()), "widget")
+
+    assert widget.type == "Banner"
+    assert dict(widget.props) == {"title": "Base", "options": {"a": 9}}
+
+
+def _pinned_profile(*pinned_ids: str) -> AccountProfile:
+    return AccountProfile(
+        user_id="user-oid",
+        entitlements=frozenset({"billing.read"}),
+        preferences=Preferences(pinned_component_ids=pinned_ids),
+    )
+
+
+PIN_DEFINITION_COMPONENTS = [
+    _card("a"),
+    _card("b"),
+    _card("hidden", requiredEntitlements=["billing.write"]),
+    _card("c"),
+]
+
+
+def test_pinned_component_removed_by_entitlements_is_absent_and_keeps_order():
+    definition = _definition(PIN_DEFINITION_COMPONENTS)
+
+    resolved = _resolve(definition, _pinned_profile("hidden", "c"), _principal())
+
+    assert _component_ids(resolved) == ["c", "a", "b"]
+
+
+def test_duplicate_pins_place_each_component_once_in_first_occurrence_order():
+    definition = _definition(PIN_DEFINITION_COMPONENTS)
+
+    resolved = _resolve(definition, _pinned_profile("b", "a", "b"), _principal())
+
+    assert _component_ids(resolved) == ["b", "a", "c"]
+
+
+def test_unknown_pin_is_ignored():
+    definition = _definition(PIN_DEFINITION_COMPONENTS)
+
+    resolved = _resolve(definition, _pinned_profile("missing", "c"), _principal())
+
+    assert _component_ids(resolved) == ["c", "a", "b"]
