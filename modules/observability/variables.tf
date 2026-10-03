@@ -37,3 +37,23 @@ variable "sampling_percentage" {
   type        = number
   default     = 100
 }
+
+variable "alert_email_addresses" {
+  description = "API の 5xx 応答アラートの通知先メールアドレス。空の場合はアラートを作成しない"
+  type        = list(string)
+  default     = []
+  validation {
+    condition     = alltrue([for address in var.alert_email_addresses : strcontains(address, "@")])
+    error_message = "alert_email_addresses は @ を含むメールアドレスを指定してください。"
+  }
+}
+
+variable "server_error_alert_threshold" {
+  description = "5 分間にこの件数を超える 5xx 応答でアラートを発報する"
+  type        = number
+  default     = 5
+  validation {
+    condition     = var.server_error_alert_threshold > 0
+    error_message = "server_error_alert_threshold は 0 より大きい値を指定してください。"
+  }
+}
