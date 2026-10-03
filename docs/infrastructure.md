@@ -51,9 +51,14 @@ Entra ID のアプリケーション定義は組織のテナントに影響し�
 |---|---|---|
 | Cosmos DB | serverless | serverless |
 | Cosmos DB backup | Periodic（4時間間隔 / 8時間保持 / Local） | Continuous（7日） |
-| リソース削除保護 | 無効 | 有効 |
+| リソース削除保護 | なし | なし |
 | Function App のスケール上限 | 40 | 100 |
 | ログ保持 | 30日 | 90日 |
+
+Terraform は両環境とも削除保護を設定していません。`prevent_destroy` も管理ロックも定義していないため、`terraform destroy` と手動削除は止まりません。
+保護が必要な場合は、運用者が `CanNotDelete` ロックをリソースグループへ手動で追加します。
+CI用アプリケーションには、ワークロード用リソースグループの `Contributor` と条件付きの `Role Based Access Control Administrator` を付与しています。
+`Contributor` は `Microsoft.Authorization` の書き込みを許可しないため、ロックの作成と削除は運用者が行います。
 
 ## CI/CD
 
