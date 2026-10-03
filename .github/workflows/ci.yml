@@ -21,8 +21,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.14"
       - name: Install pinned pip
@@ -60,11 +60,11 @@ jobs:
       matrix:
         env: [dev, prod]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - name: Read Terraform version
         id: terraform_version
         run: echo "version=$(cat .terraform-version)" >> "$GITHUB_OUTPUT"
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_version: ${{ steps.terraform_version.outputs.version }}
           terraform_wrapper: false
@@ -94,11 +94,11 @@ jobs:
       TF_VAR_app_role_assignments: ${{ vars.DEV_APP_ROLE_ASSIGNMENTS }}
       TF_VAR_pre_authorized_client_ids: ${{ vars.DEV_PRE_AUTHORIZED_CLIENT_IDS }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - name: Read Terraform version
         id: terraform_version
         run: echo "version=$(cat .terraform-version)" >> "$GITHUB_OUTPUT"
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_version: ${{ steps.terraform_version.outputs.version }}
           terraform_wrapper: false
