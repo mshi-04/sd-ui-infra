@@ -30,4 +30,5 @@ def cache_headers(etag: str, max_age_seconds: int) -> dict[str, str]:
     return {
         "ETag": etag,
         "Cache-Control": f"private, max-age={max_age_seconds}",
+        "Vary": "Authorization",
     }
