@@ -22,7 +22,7 @@ resource "random_uuid" "app_role" {
 resource "azuread_application" "api" {
   display_name     = "${var.project_name}-api-${var.env}"
   sign_in_audience = "AzureADMyOrg"
-  owners           = [data.azuread_client_config.current.object_id]
+  owners           = var.owner_object_ids
 
   api {
     requested_access_token_version = 2
@@ -65,13 +65,13 @@ resource "azuread_application_identifier_uri" "api" {
 resource "azuread_service_principal" "api" {
   client_id                    = azuread_application.api.client_id
   app_role_assignment_required = var.app_role_assignment_required
-  owners                       = [data.azuread_client_config.current.object_id]
+  owners                       = var.owner_object_ids
 }
 
 resource "azuread_application" "client" {
   display_name     = "${var.project_name}-client-${var.env}"
   sign_in_audience = "AzureADMyOrg"
-  owners           = [data.azuread_client_config.current.object_id]
+  owners           = var.owner_object_ids
 
   public_client {
     redirect_uris = var.public_client_redirect_uris
@@ -89,7 +89,7 @@ resource "azuread_application" "client" {
 
 resource "azuread_service_principal" "client" {
   client_id = azuread_application.client.client_id
-  owners    = [data.azuread_client_config.current.object_id]
+  owners    = var.owner_object_ids
 }
 
 resource "azuread_application_pre_authorized" "client" {
@@ -104,22 +104,4 @@ resource "azuread_application_pre_authorized" "additional" {
   application_id       = azuread_application.api.id
   authorized_client_id = each.value
   permission_ids       = [random_uuid.ui_schema_read.result]
-}
-
-resource "azuread_app_role_assignment" "user" {
-  for_each = {
-    for assignment in flatten([
-      for user_object_id, roles in var.app_role_assignments : [
-        for role in roles : {
-          key            = "${user_object_id}:${role}"
-          user_object_id = user_object_id
-          role           = role
-        }
-      ]
-    ]) : assignment.key => assignment
-  }
-
-  app_role_id         = random_uuid.app_role[each.value.role].result
-  principal_object_id = each.value.user_object_id
-  resource_object_id  = azuread_service_principal.api.object_id
 }

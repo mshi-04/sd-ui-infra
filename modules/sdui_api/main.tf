@@ -58,6 +58,8 @@ resource "azurerm_function_app_flex_consumption" "api" {
   maximum_instance_count      = var.maximum_instance_count
   https_only                  = true
 
+  webdeploy_publish_basic_authentication_enabled = false
+
   identity {
     type = "SystemAssigned"
   }

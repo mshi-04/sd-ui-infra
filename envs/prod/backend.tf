@@ -1,7 +1,7 @@
 terraform {
   backend "azurerm" {
     key              = "prod/terraform.tfstate"
-    container_name   = "tfstate"
+    container_name   = "tfstate-prod"
     use_azuread_auth = true
     use_oidc         = true
   }

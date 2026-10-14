@@ -36,13 +36,12 @@ variable "app_roles" {
   }))
 }
 
-variable "app_role_assignments" {
-  description = "ユーザーの object id と、割り当てる app role の対応"
-  type        = map(list(string))
-  default     = {}
+variable "owner_object_ids" {
+  description = "Entra ID のアプリ登録とサービスプリンシパルの owner の object id。Application.ReadWrite.OwnedBy で管理するため、実行主体を含める"
+  type        = list(string)
   validation {
-    condition     = alltrue([for roles in values(var.app_role_assignments) : alltrue([for role in roles : contains(keys(var.app_roles), role)])])
-    error_message = "app_role_assignments には app_roles に定義された role のみ指定できます。"
+    condition     = length(var.owner_object_ids) >= 1 && alltrue([for id in var.owner_object_ids : can(regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", id))])
+    error_message = "owner_object_ids には UUID を1つ以上指定してください。"
   }
 }
 
