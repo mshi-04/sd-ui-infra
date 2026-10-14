@@ -39,9 +39,19 @@ def key_resolver(private_key: rsa.RSAPrivateKey):
     return resolve
 
 
+@pytest.fixture(scope="session")
+def other_private_key() -> rsa.RSAPrivateKey:
+    return rsa.generate_private_key(public_exponent=65537, key_size=2048)
+
+
+def jwk_for(public_key: Any, kid: str) -> dict[str, Any]:
+    jwk = jwt.algorithms.RSAAlgorithm.to_jwk(public_key, as_dict=True)
+    return {**jwk, "kid": kid, "use": "sig", "alg": "RS256"}
+
+
 @pytest.fixture
 def issue_token(private_key: rsa.RSAPrivateKey):
-    def issue(**overrides: Any) -> str:
+    def issue(*, kid: str | None = None, signing_key: Any = None, **overrides: Any) -> str:
         now = dt.datetime.now(tz=dt.UTC)
         claims: dict[str, Any] = {
             "iss": ISSUER,
@@ -54,7 +64,8 @@ def issue_token(private_key: rsa.RSAPrivateKey):
         }
         claims.update(overrides)
         present = {name: value for name, value in claims.items() if value is not None}
-        return jwt.encode(present, private_key, algorithm="RS256")
+        headers = {"kid": kid} if kid else None
+        return jwt.encode(present, signing_key or private_key, algorithm="RS256", headers=headers)
 
     return issue
 

@@ -118,6 +118,7 @@ def test_get_ui_schema_returns_resolved_payload_and_cache_headers(
     }
     assert response.headers["ETag"].startswith('"') and response.headers["ETag"].endswith('"')
     assert response.headers["Cache-Control"] == f"private, max-age={cache_max_age_seconds}"
+    assert response.headers["Vary"] == "Authorization"
     fetch_definition.assert_called_once_with(settings, "dashboard")
     fetch_profile.assert_called_once_with(settings, SUBJECT)
 
@@ -132,6 +133,7 @@ def test_matching_etag_returns_empty_304_with_cache_headers(issue_token: Callabl
     assert response.get_body() == b""
     assert response.headers["ETag"] == current.headers["ETag"]
     assert response.headers["Cache-Control"] == current.headers["Cache-Control"]
+    assert response.headers["Vary"] == "Authorization"
 
 
 def test_mismatched_etag_returns_current_payload(issue_token: Callable[..., str], entry: tuple[Mock, Mock]) -> None:

@@ -17,7 +17,7 @@ GET {base_url}/ui/{surface}
 
 | ステータス | 意味 |
 |---|---|
-| 200 | UIスキーマを返す。`ETag` と `Cache-Control: private, max-age=60` を伴う |
+| 200 | UIスキーマを返す。`ETag`、`Cache-Control: private, max-age=60`、`Vary: Authorization` を伴う |
 | 304 | `If-None-Match` が一致。ボディなし |
 | 401 | トークンが無効、または `UiSchema.Read` scope が無い。理由は返さない |
 | 404 | 未知の surface |
@@ -66,6 +66,7 @@ GET {base_url}/ui/{surface}
 - `requiredEntitlements` はサーバー側で評価済みで、レスポンスには含まれません。
 - 同じユーザーでも権限や設定が変われば `revision` は同じまま `ETag` が変わります。
   キャッシュの一致判定には `ETag` を使ってください。
+- 応答はトークンごとに異なるため、`Vary: Authorization` を付けています。`304` にも同じヘッダーが付きます。
 
 ## 認証（MSAL Android）
 
