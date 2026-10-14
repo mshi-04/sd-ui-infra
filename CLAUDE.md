@@ -15,6 +15,15 @@
 - [docs/commands.md](docs/commands.md): よく使うコマンド
 - [docs/testing.md](docs/testing.md): pytest のテスト構成と方針
 
+## AI skills
+
+作業内容に応じて [.claude/skills/](.claude/skills/) の該当 `SKILL.md` を読みます。
+
+- [ui-definition-implementation](.claude/skills/ui-definition-implementation/SKILL.md): UI surface と UI 定義（seed、version、variant、requiredEntitlements）の設計・実装・修正
+- [app-role-implementation](.claude/skills/app-role-implementation/SKILL.md): app role と entitlement（config/app_roles.json と Entra ID の app role）の設計・実装・修正
+- [api-implementation](.claude/skills/api-implementation/SKILL.md): Azure Functions の HTTP API と API 契約の設計・実装・修正
+- [infra-implementation](.claude/skills/infra-implementation/SKILL.md): Terraform / Azure インフラの設計・実装・修正
+
 ## 作業の前提
 
 - `modules/identity` の変更はテナント全体へ影響します。plan の差分を提示してから apply します。
