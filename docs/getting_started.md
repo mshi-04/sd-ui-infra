@@ -10,6 +10,8 @@
 terraform fmt -check -recursive
 terraform -chdir=envs/dev init -backend=false
 terraform -chdir=envs/dev validate
+terraform -chdir=bootstrap init -backend=false
+terraform -chdir=bootstrap validate
 ruff check functions scripts
 python -m mypy
 pytest
@@ -32,17 +34,25 @@ az account show --query "{tenantId:tenantId, subscriptionId:id, name:name}"
 
 - サブスクリプションの `Owner`（ロール割り当てを作成するため）
 - Entra ID の `Application Administrator` 以上（アプリケーション登録を作成するため）
+- Entra ID の `Privileged Role Administrator` または `Global Administrator`（deploy ID に Microsoft Graph のアプリケーション権限を付与するため）
 
 ## 2. bootstrap
 
-state backend、ワークロード用リソースグループ、CI用アプリケーションを作ります。local state で1度だけ実行します。
+state backend、ワークロード用リソースグループ、環境ごとのデプロイ用 ID、PR の plan 用 ID を作ります。resource provider の登録も行います。local state で1度だけ実行します。
 
 ```bash
 terraform -chdir=bootstrap init
 terraform -chdir=bootstrap apply -var="subscription_id=<subscription-id>" -var="github_repository=<owner>/<name>"
 ```
 
-出力の `tfstate_storage_account_name`、`tfstate_resource_group_name`、`ci_client_id`、`tenant_id` を控えます。
+次の出力を控えます。
+
+- `tfstate_storage_account_name`、`tfstate_resource_group_name`、`tenant_id`
+- `deploy_client_ids`（dev と prod）
+- `deploy_service_principal_object_ids`（dev と prod）
+- `plan_client_id`
+
+`tfstate_container_names` は環境ごとのコンテナ名で、`envs/*/backend.tf` の値と一致します。
 
 state 用ストレージはキー認証を無効にしているため、`bootstrap` は実行者へ `Storage Blob Data Owner` を
 付与します。別の担当者が `envs/*` を操作する場合は、同じロールを追加してください。
@@ -50,7 +60,12 @@ state 用ストレージはキー認証を無効にしているため、`bootstr
 ## 3. GitHub Actions の変数
 
 [docs/infrastructure.md](infrastructure.md) の表にある variables を登録します。
-`prod` の GitHub Environment には required reviewers を設定します。
+
+1. GitHub Environment の `dev` と `prod` を作成し、deployment branch policy を `dev` は `develop`、`prod` は `main` に限定する
+2. `develop` と `main` への直接 push を禁止する
+3. repository スコープに `AZURE_PLAN_CLIENT_ID`（`plan_client_id`）と `DEV_APP_OWNER_OBJECT_ID`（dev の `deploy_service_principal_object_ids`）などを登録する
+4. 各 Environment に、その環境の `AZURE_CLIENT_ID`（`deploy_client_ids`）と `APP_OWNER_OBJECT_ID`（`deploy_service_principal_object_ids`）などを登録する。`AZURE_CLIENT_ID` を repository スコープに登録しない
+5. `prod` に required reviewers を設定する（private リポジトリでは GitHub Enterprise が必要）
 
 ## 4. 環境の適用
 
@@ -64,6 +79,8 @@ terraform -chdir=envs/dev apply -var-file=../../environments/dev.tfvars
 ```
 
 `environments/*.tfvars` は `.gitignore` の対象です。コミットしないでください。
+
+`app_owner_object_id` には、その環境の deploy サービスプリンシパルの object id（bootstrap の `deploy_service_principal_object_ids`）を指定します。
 
 ## 5. UI定義の投入
 
@@ -103,7 +120,8 @@ curl -H "Authorization: Bearer <access-token>" \
 ```
 
 app role を割り当てていないユーザーでは variant が適用されません。
-出し分けを確認する場合は、Entra ID 側で `SupportAgent` を割り当てるか、account profile の `audiences` に追加します。
+出し分けを確認する場合は、Entra 管理センターまたは CLI で `SupportAgent` を割り当てるか、account profile の `audiences` に追加します。
+app role の割り当ては Terraform の管理対象外です。
 
 ## 撤去
 

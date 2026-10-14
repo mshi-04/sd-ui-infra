@@ -31,7 +31,7 @@
 ### Authorization
 
 - Azure リソース間の認可は接続文字列ではなく managed identity と RBAC を使います。
-- `azurerm_role_assignment` は組み込みロールを優先し、`Owner` と `Contributor` をアプリケーションに割り当てないでください。
+- `azurerm_role_assignment` は組み込みロールを優先し、`Owner` と `Contributor` をアプリケーションに割り当てないでください。例外は、環境ごとのデプロイ用 ID が自環境のリソースグループに持つ `Contributor` です（[インフラストラクチャ](infrastructure.md) を参照）。
 - スコープはサブスクリプションではなく、対象リソースまで絞ります。
 
 ### Style

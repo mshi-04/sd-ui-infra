@@ -19,10 +19,9 @@ variable "allowed_origins" {
   type        = list(string)
 }
 
-variable "app_role_assignments" {
-  description = "ユーザーの object id と、割り当てる app role の対応"
-  type        = map(list(string))
-  default     = {}
+variable "app_owner_object_id" {
+  description = "Entra ID のアプリ登録の owner。この環境のデプロイ用サービスプリンシパルの object id"
+  type        = string
 }
 
 variable "pre_authorized_client_ids" {

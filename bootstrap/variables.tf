@@ -31,7 +31,7 @@ variable "github_repository" {
 }
 
 variable "ci_assignable_role_definition_ids" {
-  description = "CI が割り当てを許可される組み込みロールの定義ID"
+  description = "デプロイ用 ID が自環境のリソースグループ内で割り当てを許可される組み込みロールの定義ID"
   type        = list(string)
   default = [
     # Storage Blob Data Owner

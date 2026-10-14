@@ -58,7 +58,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        env: [dev, prod]
+        directory: [envs/dev, envs/prod, bootstrap]
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - name: Read Terraform version
@@ -71,9 +71,9 @@ jobs:
       - name: Check formatting
         run: terraform fmt -check -recursive
       - name: Initialize without backend
-        run: terraform -chdir=envs/${{ matrix.env }} init -backend=false
+        run: terraform -chdir=${{ matrix.directory }} init -backend=false
       - name: Validate
-        run: terraform -chdir=envs/${{ matrix.env }} validate
+        run: terraform -chdir=${{ matrix.directory }} validate
 
   terraform-plan:
     needs: terraform-validate
@@ -85,13 +85,13 @@ jobs:
     env:
       ARM_USE_OIDC: "true"
       ARM_USE_AZUREAD: "true"
-      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      ARM_CLIENT_ID: ${{ vars.AZURE_PLAN_CLIENT_ID }}
       ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       TF_VAR_subscription_id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       TF_VAR_public_client_redirect_uris: ${{ vars.DEV_PUBLIC_CLIENT_REDIRECT_URIS }}
       TF_VAR_allowed_origins: ${{ vars.DEV_ALLOWED_ORIGINS }}
-      TF_VAR_app_role_assignments: ${{ vars.DEV_APP_ROLE_ASSIGNMENTS }}
+      TF_VAR_app_owner_object_id: ${{ vars.DEV_APP_OWNER_OBJECT_ID }}
       TF_VAR_pre_authorized_client_ids: ${{ vars.DEV_PRE_AUTHORIZED_CLIENT_IDS }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
@@ -108,4 +108,4 @@ jobs:
             -backend-config="resource_group_name=${{ vars.TFSTATE_RESOURCE_GROUP_NAME }}" \
             -backend-config="storage_account_name=${{ vars.TFSTATE_STORAGE_ACCOUNT_NAME }}"
       - name: Plan
-        run: terraform -chdir=envs/dev plan -lock=false -input=false
+        run: terraform -chdir=envs/dev plan -refresh=false -lock=false -input=false
