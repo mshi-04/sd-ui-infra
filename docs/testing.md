@@ -7,7 +7,7 @@
 | パス | 役割 |
 |---|---|
 | `functions/sdui_api/tests/conftest.py` | 共通の fixture（署名鍵、トークン生成、設定用の環境変数、クエリ応答の模擬） |
-| `functions/sdui_api/tests/test_auth.py` | JWT 検証の分岐、JWKS 取得失敗の分類、JWKS クライアントの timeout |
+| `functions/sdui_api/tests/test_auth.py` | JWT 検証の分岐、JWKS 取得失敗の分類、JWKS クライアントの設定、鍵集合のキャッシュ期限と取得失敗時の保持 |
 | `functions/sdui_api/tests/test_function_app.py` | 本番 HTTP 入口の認証・解決・条件付き取得・エラー応答（401 / 404 / 500 / 503）の契約 |
 | `functions/sdui_api/tests/test_ui_repository.py` | Cosmos DB の profile 欠落を空 profile に変換する境界、SDK 例外の一時障害・恒常的失敗への分類、クライアントの timeout・再試行設定 |
 | `functions/sdui_api/tests/test_ui_resolver.py` | 解決フローの優先順位 |
@@ -25,6 +25,8 @@
 
 - Cosmos DB と JWKS エンドポイントへの実アクセスはテストに含めません。
 - JWT はテスト内で生成した RSA 鍵で署名し、JWKS はローカルの鍵集合に差し替えます。
+- JWKS のキャッシュ挙動は、`urllib.request.build_opener` を差し替えた偽の opener と、偽の単調時計で検証します。PyJWT 本体の `fetch_data` とクールダウンの管理を通すため、取得失敗の分類も本物と同じ経路です。時計は `auth` と `jwt` 内の `time` の参照だけを差し替え、グローバルの `time.monotonic` には触れません。
+- 鍵の削除、24時間以内の取得失敗、24時間超過、初回取得の失敗、未知の `kid` の再取得間隔を、時計を進めて確認します。
 - resolver は純粋関数として、I/O を介さずに検証します。
 - HTTP 入口は `azure.functions.HttpRequest` で呼び出し、Cosmos DB と JWKS の外部通信を差し替えて、ステータス・本文・キャッシュヘッダーを検証します。認証の暗号処理は既存の JWT fixture を再利用します。
 - `test_dev_server.py` はモックサーバーの解決処理とヘッダー値解釈を検証し、モックのHTTPハンドラー自体は呼び出しません。`test_function_app.py` は本番の入口関数を直接呼び、その応答オブジェクトを検証します。Functionsホストを起動するHTTP通信テストではありません。

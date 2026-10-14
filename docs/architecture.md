@@ -107,7 +107,8 @@ role を割り当てるだけでUIが変わり、profile 文書は個別の上�
 
 ## キャッシュ
 
-- レスポンスに `ETag` と `Cache-Control: private, max-age=60` を付与します。
+- レスポンスに `ETag`、`Cache-Control: private, max-age=60`、`Vary: Authorization` を付与します。`304` も同じヘッダーを返します。
+- 応答はユーザーごとに異なるため、共有キャッシュがトークン違いの応答を混同しないよう `Vary: Authorization` を付けます。
 - クライアントの `If-None-Match` が生成した ETag と文字列で完全一致した場合は `304` を返します。
 - 現状は弱い ETag（`W/` 付き）、複数値のリスト、`*` を一致として扱いません。認証済みで対象surfaceが存在する場合は `200` を返します。
 - UI定義の `revision` や解決結果が変わると ETag が変わります。同じ `revision` でも、権限や設定によってpayloadが変われば ETag は変わります。
@@ -122,7 +123,7 @@ SDK 固有の例外は `ui_repository`（Cosmos DB）と `auth`（JWKS）で `de
 | 認証失敗 | トークン不正、期限切れ、scope 不足 | 401 `unauthorized`（従来どおり） |
 | surface なし | 定義の問い合わせが応答ページを返し、文書が0件 | 404 `surface_not_found`（従来どおり） |
 | profile なし | `read_item` が 404 | 空の profile で解決（従来どおり） |
-| JWKS の一時障害 | 接続失敗、timeout、JWKS の HTTP エラー（`PyJWKClientConnectionError`） | 503 `service_unavailable` |
+| JWKS の一時障害 | 接続失敗、timeout、JWKS の HTTP エラー（`PyJWKClientConnectionError`）。最後に取得できた鍵集合が24時間以内なら、それを使って検証を続ける | 503 `service_unavailable`（保持中の鍵集合が無い、または24時間を超えた場合） |
 | Cosmos DB の一時障害 | 接続失敗、timeout（`ServiceRequestError` / `ServiceResponseError` / `CosmosClientTimeoutError`）、SDK の再試行後に残った 408 / 429 / 503 / 504 | 503 `service_unavailable` |
 | Cosmos DB の恒常的な失敗 | 401 / 403 / 404（container なし）/ 500 などその他の status、資格情報の取得失敗（`ClientAuthenticationError`）、応答の解釈失敗 | 500 `internal_error` |
 | 設定不備 | 必須環境変数の欠落、`UI_CACHE_MAX_AGE_SECONDS` の数値変換失敗、`ROLE_ENTITLEMENTS` の JSON・構造の不備 | 500 `internal_error` |
@@ -140,6 +141,9 @@ SDK 固有の例外は `ui_repository`（Cosmos DB）と `auth`（JWKS）で `de
 | 対象 | 設定 | 値 | SDK の既定値 |
 |---|---|---|---|
 | JWKS | `PyJWKClient(timeout=...)`（接続・読み取りの各操作） | 3 秒 | 30 秒 |
+| JWKS | `PyJWKClient(lifespan=...)`（鍵集合のキャッシュ期間） | 5 分 | 5 分 |
+| JWKS | `PyJWKClient(cooldown_duration=...)`（未知の `kid` による再取得の間隔） | 30 秒 | 30 秒 |
+| JWKS | 取得失敗時に保持中の鍵集合を使い続ける上限（`JWKS_STALE_LIMIT_SECONDS`） | 24 時間 | なし |
 | Cosmos DB | 操作ごとの `timeout`（クライアント生成時のアカウント取得、`query_items`、`read_item`） | 4 秒 | なし |
 | Cosmos DB | `connection_timeout`（接続確立） | 2 秒 | 60 秒 |
 | Cosmos DB | `RequestsTransport(read_timeout=...)`（応答の読み取り） | 2 秒 | 300 秒 |
@@ -151,7 +155,7 @@ SDK 固有の例外は `ui_repository`（Cosmos DB）と `auth`（JWKS）で `de
 - `retry_total` は 429 の再試行回数にも使われます。0 を渡すと SDK が 429 の回数を既定値の9回へ戻すため、1 にしています。
 - アカウントは単一リージョンです。エンドポイント検出が有効だと、408 を受けた読み取りやクエリを待機なしで最大120回送り直すため無効にしています。複数リージョンにする場合は見直してください。
 - Cosmos DB の定義クエリは、クライアントの container 情報が未取得の間、先に container の読込を行います。この読込には操作ごとの `timeout` が渡りませんが、接続・読み取りの上限と再試行回数で抑えられます。
-- JWKS は、署名鍵の `kid` が見つからないと鍵集合を1回取り直すため、最大2回取得します。`timeout` は名前解決には効きません。
+- JWKS は、鍵集合のキャッシュが切れた状態で未知の `kid` のトークンが来ると、取得と取り直しで最大2回取得します。取り直しは30秒に1回までです。`timeout` は名前解決には効きません。
 
 到達できない Cosmos DB を想定した計測では（ローカルの Python 3.14、azure-cosmos 4.9.0）、失敗が分類済みの例外になるまでの時間は次のとおりです。
 
