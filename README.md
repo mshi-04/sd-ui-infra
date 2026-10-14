@@ -7,7 +7,7 @@ Microsoft Entra ID で認証したユーザーのアカウント属性に応じ�
 
 | パス | 役割 |
 |---|---|
-| `bootstrap/` | Terraform state backend の初期構築 |
+| `bootstrap/` | Terraform state backend、環境ごとのデプロイ用 ID、PR の plan 用 ID の初期構築 |
 | `modules/` | 再利用可能な Terraform モジュール |
 | `envs/` | 環境ごとのルートモジュール |
 | `environments/` | 環境ごとの変数ファイル |

@@ -33,8 +33,8 @@ app role とその role が付与する entitlement は `config/app_roles.json` 
 
 role を増やすときは `config/app_roles.json` を編集して apply します。Terraform と API の両方へ同時に反映されます。
 
-ユーザーへの role 割り当ては `app_role_assignments` 変数（ユーザーの object id → role の一覧）で管理できます。
-ポータルから割り当てた場合は Terraform の管理外になるため、どちらかに統一してください。
+ユーザーへの role 割り当ては、Entra 管理センターまたは CLI で行います。Terraform では管理しません。
+割り当てに必要な Microsoft Graph の権限は、テナント全体への権限昇格に使えるためです。
 
 ## トークン検証
 
@@ -58,7 +58,7 @@ JWKS を取得できない場合（接続失敗、timeout、JWKS の HTTP エラ
 - Function App は system-assigned managed identity を持ちます。
 - Cosmos DB へのアクセスは接続文字列ではなく、data plane role assignment で許可します。
 - 付与するロールは組み込みの `Cosmos DB Built-in Data Reader` を基本とします。
-- 書き込みが必要な運用操作は、CI/CD の service principal 側に限定します。
+- 書き込みが必要な運用操作は、環境ごとのデプロイ用 service principal 側に限定します。PR の plan 用 service principal は読み取り専用です。
 
 ## ログ衛生
 

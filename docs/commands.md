@@ -19,6 +19,9 @@ terraform -chdir=envs/dev plan -var-file=../../environments/dev.tfvars
 terraform -chdir=envs/dev apply -var-file=../../environments/dev.tfvars
 ```
 
+`bootstrap/` は local state で、実行には `subscription_id` と `github_repository` が必要です。手順は [セットアップ](getting_started.md#2-bootstrap) を参照してください。
+`envs/*` の tfvars には、その環境の deploy サービスプリンシパルの object id を `app_owner_object_id` として指定します。
+
 ## Functions
 
 リポジトリのルートで Python 3.14 を使います。Windows (PowerShell) では次を実行します。
