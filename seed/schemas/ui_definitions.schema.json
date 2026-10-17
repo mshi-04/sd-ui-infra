@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stored UI definition",
+  "type": "object",
+  "required": ["id", "surface", "version", "revision"],
+  "properties": {
+    "id": { "$ref": "#/$defs/identifier" },
+    "surface": { "$ref": "#/$defs/identifier" },
+    "version": { "$ref": "#/$defs/identifier" },
+    "revision": { "$ref": "#/$defs/identifier" },
+    "components": { "$ref": "#/$defs/components" },
+    "variants": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/variant" }
+    }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "minLength": 1 },
+    "components": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/component" }
+    },
+    "component": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "type": { "$ref": "#/$defs/identifier" },
+        "props": { "type": "object" },
+        "requiredEntitlements": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "children": { "$ref": "#/$defs/components" }
+      }
+    },
+    "variant": {
+      "type": "object",
+      "required": ["audience"],
+      "properties": {
+        "audience": { "$ref": "#/$defs/identifier" },
+        "components": { "$ref": "#/$defs/components" }
+      }
+    }
+  }
+}

@@ -2,6 +2,7 @@ subscription_id             = "00000000-0000-0000-0000-000000000000"
 project_name                = "sd-ui"
 public_client_redirect_uris = ["msauth://com.example.sdui/0000000000000000000000000000%3D"]
 allowed_origins             = []
+app_owner_object_id         = "00000000-0000-0000-0000-000000000000"
 
 # Azure CLI。dev のみ、curl での疎通確認に使う
 pre_authorized_client_ids = ["04b07795-8ddb-461a-bbee-02f9e1bf7b46"]

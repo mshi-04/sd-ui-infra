@@ -19,7 +19,7 @@ output "entra_api_client_id" {
 }
 
 output "entra_client_app_client_id" {
-  description = "SPA クライアントの client id"
+  description = "Android クライアントの client id"
   value       = module.identity.client_app_client_id
 }
 

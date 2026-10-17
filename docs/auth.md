@@ -33,8 +33,8 @@ app role とその role が付与する entitlement は `config/app_roles.json` 
 
 role を増やすときは `config/app_roles.json` を編集して apply します。Terraform と API の両方へ同時に反映されます。
 
-ユーザーへの role 割り当ては `app_role_assignments` 変数（ユーザーの object id → role の一覧）で管理できます。
-ポータルから割り当てた場合は Terraform の管理外になるため、どちらかに統一してください。
+ユーザーへの role 割り当ては、Entra 管理センターまたは CLI で行います。Terraform では管理しません。
+割り当てに必要な Microsoft Graph の権限は、テナント全体への権限昇格に使えるためです。
 
 ## トークン検証
 
@@ -49,15 +49,27 @@ role を増やすときは `config/app_roles.json` を編集して apply しま�
 
 検証に失敗した場合は理由を区別せず `401` を返します。失敗理由はログにのみ残します。
 
+JWKS を取得できない場合（接続失敗、timeout、JWKS の HTTP エラー）はトークンの正否を判定できないため、`401` ではなく `503` を返し、Cosmos DB へは進みません。
+取得の timeout は3秒です（PyJWT の既定値は30秒）。
+鍵集合全体を5分間キャッシュするため、鍵が JWKS から外れると、遅くとも約5分後にその鍵のトークンを受け付けなくなります。
+未知の `kid` のトークンは鍵集合を取り直しますが、取得は30秒に1回までです。
+取得に失敗した間は、最後に取得できた鍵集合を最長24時間使い続けます。24時間を超えた場合と、一度も取得できていない場合は `503` です。
+この間に新しい鍵で署名されたトークンは、鍵が見つからず `401` になります。
+上限値の根拠と応答の分類は [アーキテクチャ](architecture.md#外部サービス障害時の応答) を参照してください。
+
 ## Azure リソースへの認可
 
 - Function App は system-assigned managed identity を持ちます。
 - Cosmos DB へのアクセスは接続文字列ではなく、data plane role assignment で許可します。
 - 付与するロールは組み込みの `Cosmos DB Built-in Data Reader` を基本とします。
-- 書き込みが必要な運用操作は、CI/CD の service principal 側に限定します。
+- 書き込みが必要な運用操作は、環境ごとのデプロイ用 service principal 側に限定します。PR の plan 用 service principal は読み取り専用です。
 
 ## ログ衛生
 
 - access token、`upn`、`email`、氏名をログに出さないでください。
 - `oid` はハッシュ化して出力します（`auth.mask_subject`）。
 - 401 / 403 のログには surface と検証失敗の分類のみを残します。
+- JWKS の取得に失敗して保持中の鍵集合を使った場合は、warning に経過秒数のみを残します。トークン、`kid`、URL は出しません。
+- 外部サービス障害（500 / 503）のログには、surface、依存先（`jwks`、`cosmos.<container>`）、例外の型と HTTP status のみを残します。Cosmos DB の例外メッセージには文書のパス（`oid` を含む）が入り得るため、メッセージと traceback は出しません。
+- 設定不備のログには環境変数の名前と `missing` / `invalid` の区別のみを残し、値は出しません。変換エラーのメッセージは値を含むため、例外の連鎖も切ります。
+- 想定外の不具合は、原因調査のため `logger.exception` で traceback を残します。トークンの検証失敗と外部サービスの例外はこの経路へ届く前に分類済みで、traceback にはローカル変数が含まれないため、トークンや `oid` が出ない前提です。例外メッセージに値を含める処理を追加する場合は、この前提を見直してください。

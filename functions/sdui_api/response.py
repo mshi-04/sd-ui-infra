@@ -1,12 +1,12 @@
 import json
-from typing import Any
+from collections.abc import Mapping
 
 import azure.functions as func
 
 CONTENT_TYPE = "application/json"
 
 
-def json_response(status_code: int, body: dict[str, Any], headers: dict[str, str] | None = None) -> func.HttpResponse:
+def json_response(status_code: int, body: Mapping[str, object], headers: dict[str, str] | None = None) -> func.HttpResponse:
     return func.HttpResponse(
         body=json.dumps(body, ensure_ascii=False, separators=(",", ":")),
         status_code=status_code,
@@ -30,4 +30,5 @@ def cache_headers(etag: str, max_age_seconds: int) -> dict[str, str]:
     return {
         "ETag": etag,
         "Cache-Control": f"private, max-age={max_age_seconds}",
+        "Vary": "Authorization",
     }

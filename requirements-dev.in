@@ -1,0 +1,7 @@
+-c functions/sdui_api/requirements.txt
+
+jsonschema==4.26.0
+mypy==2.3.1
+pytest==9.1.1
+ruff==0.16.5
+types-jsonschema==4.26.0.20260518

@@ -53,10 +53,12 @@ resource "azurerm_function_app_flex_consumption" "api" {
   storage_container_endpoint  = "${azurerm_storage_account.api.primary_blob_endpoint}${azurerm_storage_container.deployments.name}"
   storage_authentication_type = "SystemAssignedIdentity"
   runtime_name                = "python"
-  runtime_version             = "3.12"
+  runtime_version             = "3.14"
   instance_memory_in_mb       = var.instance_memory_in_mb
   maximum_instance_count      = var.maximum_instance_count
   https_only                  = true
+
+  webdeploy_publish_basic_authentication_enabled = false
 
   identity {
     type = "SystemAssigned"

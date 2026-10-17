@@ -7,13 +7,13 @@ Microsoft Entra ID で認証したユーザーのアカウント属性に応じ�
 
 | パス | 役割 |
 |---|---|
-| `bootstrap/` | Terraform state backend の初期構築 |
+| `bootstrap/` | Terraform state backend、環境ごとのデプロイ用 ID、PR の plan 用 ID の初期構築 |
 | `modules/` | 再利用可能な Terraform モジュール |
 | `envs/` | 環境ごとのルートモジュール |
 | `environments/` | 環境ごとの変数ファイル |
 | `config/` | app role と entitlement の定義 |
 | `functions/sdui_api/` | UIスキーマ配信API（Azure Functions / Python） |
-| `seed/` | UI定義とアカウントプロファイルの初期データ |
+| `seed/` | UI定義とアカウントプロファイルの初期データ、保存文書の JSON Schema |
 | `scripts/` | 運用スクリプト |
 | `docs/` | 技術スタック、アーキテクチャ、規約 |
 

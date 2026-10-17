@@ -2,10 +2,26 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypedDict
 
 DEFAULT_THEME = "light"
 DEFAULT_DENSITY = "comfortable"
+
+
+class ComponentPayload(TypedDict):
+    id: str
+    type: str
+    props: dict[str, Any]
+    children: list[ComponentPayload]
+
+
+class ResolvedUiPayload(TypedDict):
+    surface: str
+    version: str
+    revision: str
+    theme: str
+    density: str
+    components: list[ComponentPayload]
 
 
 @dataclass(frozen=True)
@@ -26,7 +42,7 @@ class Component:
             children=tuple(cls.from_document(child) for child in document.get("children", [])),
         )
 
-    def to_payload(self) -> dict[str, Any]:
+    def to_payload(self) -> ComponentPayload:
         return {
             "id": self.id,
             "type": self.type,
@@ -112,7 +128,7 @@ class ResolvedUi:
     density: str
     components: Sequence[Component]
 
-    def to_payload(self) -> dict[str, Any]:
+    def to_payload(self) -> ResolvedUiPayload:
         return {
             "surface": self.surface,
             "version": self.version,

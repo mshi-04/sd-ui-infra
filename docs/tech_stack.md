@@ -41,12 +41,16 @@
 
 | 項目 | 内容 |
 |---|---|
-| Runtime | Python 3.12 |
+| Runtime | Python 3.14 |
 | Programming model | Azure Functions Python v2 (`function_app.py`) |
 | SDK | `azure-cosmos`, `azure-identity` |
 | JWT | `PyJWT[crypto]` による Entra ID トークン検証 |
 | Lint / format | `ruff` |
+| Type check | `mypy`。設定は `pyproject.toml` の `[tool.mypy]`。`jsonschema` の型は typeshed の `types-jsonschema` で補う |
+| Seed validation | `jsonschema`。`scripts/seed_cosmos.py` の登録前検証だけで使うため、開発依存に置く |
 | Test | `pytest` |
+| Dependency locks | Python 3.14 向け `uv==0.12.19` の universal resolution。CI の Linux ジョブで再生成して同期を検査する。実行時は `functions/sdui_api/requirements.txt`、開発時はこれに `requirements-dev.txt` を追加 |
+| CI package installer | `pip==26.1.2` (Linux / Windows)。Azure Functions remote build の pip はCIから制御しない |
 | Auth pattern | Entra ID JWT validation via `auth.py` helpers |
 
 ## CI/CD
@@ -55,7 +59,7 @@
 |---|---|
 | Platform | GitHub Actions |
 | Auth to Azure | Entra ID workload identity federation (OIDC) |
-| PR | Terraform plan、lint、test |
+| PR | Terraform plan、lint、型チェック、test、依存固定ファイルの同期検査 |
 | develop merge | dev auto deploy |
 | Prod | manual approval |
 

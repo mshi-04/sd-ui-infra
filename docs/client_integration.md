@@ -17,10 +17,25 @@ GET {base_url}/ui/{surface}
 
 | ステータス | 意味 |
 |---|---|
-| 200 | UIスキーマを返す。`ETag` と `Cache-Control: private, max-age=60` を伴う |
+| 200 | UIスキーマを返す。`ETag`、`Cache-Control: private, max-age=60`、`Vary: Authorization` を伴う |
 | 304 | `If-None-Match` が一致。ボディなし |
 | 401 | トークンが無効、または `UiSchema.Read` scope が無い。理由は返さない |
 | 404 | 未知の surface |
+| 500 | サーバー側の設定不備、保存データの不備、想定外の不具合。再試行しても回復しない前提で扱う |
+| 503 | 署名鍵（JWKS）または Cosmos DB へ一時的に到達できない。時間をおいた再試行で回復し得る |
+
+200 と 304 以外は、`{"error": {"code": "<code>"}}` の形の JSON を返します。本文はエラーコードのみで、失敗理由や例外の内容は含めません。
+
+| ステータス | `code` |
+|---|---|
+| 401 | `unauthorized` |
+| 404 | `surface_not_found` |
+| 500 | `internal_error` |
+| 503 | `service_unavailable` |
+
+500 と 503 は、外部サービス障害時の応答を整理した際に追加した契約です。
+外部サービスの障害を 401 や 404、空の profile として返すことはありません。
+503 は `Retry-After` を付けません。再試行する場合はクライアント側で間隔を空け、回数を制限してください。
 
 ## レスポンス
 
@@ -51,6 +66,7 @@ GET {base_url}/ui/{surface}
 - `requiredEntitlements` はサーバー側で評価済みで、レスポンスには含まれません。
 - 同じユーザーでも権限や設定が変われば `revision` は同じまま `ETag` が変わります。
   キャッシュの一致判定には `ETag` を使ってください。
+- 応答はトークンごとに異なるため、`Vary: Authorization` を付けています。`304` にも同じヘッダーが付きます。
 
 ## 認証（MSAL Android）
 
@@ -87,6 +103,8 @@ Azure を使わずに、seed データと本番と同じ resolver でスキー�
 python scripts/dev_server.py --port 8080
 ```
 
+同じsurfaceのseedが複数ある場合は、本番と同じく文字列比較で最大の `version` を選びます。ファイル名と `revision` は選択に使いません。同じsurface・versionを複数ファイルに置くと読込エラーになります。versionの表現と重複時の扱いは [最新定義の選択](architecture.md#最新定義の選択) を参照してください。
+
 トークン検証は行わず、次のヘッダーで利用者を切り替えます。Azure へはデプロイされません。
 
 | ヘッダー | 内容 |
@@ -97,6 +115,7 @@ python scripts/dev_server.py --port 8080
 Android エミュレーターからは `http://10.0.2.2:8080/api/` で到達します（`10.0.2.2` はホストの `127.0.0.1`）。
 平文HTTPになるため、debug ビルドのみ cleartext を許可してください。実機の場合は `--host 0.0.0.0` で起動し、
 ホストのLAN IPを指定します。
+Android アプリはこれらのヘッダーを送らないため、アプリから接続した場合は常に匿名の利用者として応答します。
 
 ### 出し分けの確認例
 
@@ -113,7 +132,7 @@ Android エミュレーターからは `http://10.0.2.2:8080/api/` で到達し�
 
 ## アプリ側の実装状況
 
-`sd-ui-app` の `develop`（`30870b7`）を読み取って確認した内容です。契約の大部分は実装済みです。
+`sd-ui-app` の `develop`（`b770c14`）を読み取って確認した内容です。契約の大部分は実装済みです。
 
 | 契約 | 実装 | 場所 |
 |---|---|---|
@@ -122,14 +141,21 @@ Android エミュレーターからは `http://10.0.2.2:8080/api/` で到達し�
 | 200 / 304 / 401 / 404 | sealed interface で分岐。その他は `HttpException` | `data/remote/UiSchemaRemoteDataSource.kt` |
 | 未知の `type` をスキップ | `mapNotNull` で除去 | `data/mapper/UiSchemaMapper.kt` |
 | 未知のキーを無視 | `Json { ignoreUnknownKeys = true }` | `data/di/NetworkModule.kt` |
-| `X-Dev-Oid` / `X-Dev-Roles` | debug ビルドのみの Interceptor。Gradle プロパティから注入 | `debug/.../DevIdentityModule.kt` |
+| `Authorization` | `MsalAuthClient` が取得した access token を `AuthorizationInterceptor` が付与。トークンが無ければヘッダー無しで送り、401 ならログイン画面へ戻る | `data/remote/AuthorizationInterceptor.kt` |
 | 平文HTTP | `usesCleartextTraffic` は debug マニフェストのみ | `src/debug/AndroidManifest.xml` |
 
+500 と 503 はこの確認より後に追加した契約です。上表の記録では、200 / 304 / 401 / 404 以外は `HttpException` として扱われます。
+その後のアプリが 500 と 503 を区別するか、503 で再試行するかは確認していません。
+
+base URL と scope は `gradle.properties` の `API_BASE_URL` と `API_SCOPE` で指定し、既定は dev の実APIです。
 モックサーバーへ接続する場合の起動例です。
 
 ```bash
-./gradlew installDebug -PAPI_BASE_URL=http://10.0.2.2:8080/api/ -PDEV_ROLES=BillingViewer
+./gradlew installDebug -PAPI_BASE_URL=http://10.0.2.2:8080/api/
 ```
+
+ダッシュボードへ進むにはサインインが必要です。`dev_server.py` はトークンを検証しないため、
+アプリからは匿名として扱われ、`usage-summary` のみが返ります。
 
 ### 契約側が守るべき制約
 
@@ -143,17 +169,23 @@ Android エミュレーターからは `http://10.0.2.2:8080/api/` で到達し�
 
 ### 未対応
 
-- **MSAL が未導入です。** `Authorization` ヘッダーを送らないため、実APIへ向けると常に 401 になります。
-  実APIへ切り替える前に、アプリ側でトークン取得とヘッダー付与が必要です。
-- `X-Dev-*` ヘッダーは debug ビルド限定のため、release ビルドはモックサーバーに対しても匿名扱いになります。
+`sd-ui-app` の `docs/server-contract.md`「未実装のもの」に挙がっている項目です。
+
+- release ビルド用の redirect URI。アプリは debug キーストア由来の値だけを持ちます。
+- `props` の object / 配列 / `null` 値の保持（上記の制約 1）
+- `Button` などの component が持つ action の実行
+- `ETag` と解決済みスキーマの永続化。キャッシュはメモリ上のみです。
+- `Cache-Control` の尊重。`max-age` 内でも毎回サーバーへ条件付きで問い合わせます。
 
 ## 実APIへの切り替え
 
-1. `envs/dev` を apply し、output から `api_base_url`、`entra_client_app_client_id`、`entra_api_client_id` を取得
-2. base URL を `https://sdui-api.example.invalid/api/` 系へ変更
-3. `X-Dev-*` ヘッダーを外し、MSAL で取得した access token を `Authorization` に載せる
+アプリは既定で dev の実APIを向き、MSAL で取得した access token を送ります。
+実APIで動かすためにインフラ側で必要な手順は次のとおりです。
 
-API 契約自体はモックと実APIで同一です。切り替えで変わるのは base URL と認証だけです。
+1. `envs/dev` を apply し、output から `api_base_url`、`entra_client_app_client_id`、`entra_api_client_id` を取得
+2. アプリの `gradle.properties` の `API_BASE_URL` と `API_SCOPE`、MSAL 設定が output と一致しているか確認する
+
+API 契約自体はモックと実APIで同一です。違いは base URL と、トークンを検証するかどうかだけです。
 
 Android はネイティブクライアントのため CORS は関係しません。
 ブラウザから叩く予定ができた場合のみ、`allowed_origins` にオリジンを追加して apply します。

@@ -1,55 +1,68 @@
 import argparse
-import json
 import os
 import sys
-from collections.abc import Iterator
-from pathlib import Path
+from collections.abc import Sequence
 
-from azure.cosmos import CosmosClient
+from azure.cosmos import CosmosClient, DatabaseProxy
 from azure.identity import DefaultAzureCredential
 
-SEED_ROOT = Path(__file__).resolve().parents[1] / "seed"
+from seed_validation import SEED_ROOT, SeedDocument, SeedReport, validate_seed
+
 CONTAINER_BY_DIRECTORY = {
     "ui_definitions": "UI_DEFINITIONS_CONTAINER",
     "account_profiles": "ACCOUNT_PROFILES_CONTAINER",
 }
 
 
-def documents(directory: Path) -> Iterator[dict]:
-    for path in sorted(directory.glob("*.json")):
-        yield json.loads(path.read_text(encoding="utf-8"))
+def container_name(directory: str) -> str:
+    return os.environ.get(CONTAINER_BY_DIRECTORY[directory], directory)
 
 
-def upsert_all(endpoint: str, database_name: str, dry_run: bool) -> int:
-    database = CosmosClient(endpoint, credential=DefaultAzureCredential()).get_database_client(database_name)
-
-    count = 0
-    for directory_name, container_variable in CONTAINER_BY_DIRECTORY.items():
-        directory = SEED_ROOT / directory_name
-        container_name = os.environ.get(container_variable, directory_name)
-        container = database.get_container_client(container_name)
-
-        for document in documents(directory):
-            if not dry_run:
-                container.upsert_item(document)
-            print(f"{'would upsert' if dry_run else 'upserted'} {container_name}/{document['id']}")
-            count += 1
-
-    return count
+def print_findings(report: SeedReport) -> None:
+    for warning in report.warnings:
+        print(f"warning: {warning}", file=sys.stderr)
+    for error in report.errors:
+        print(f"error: {error}", file=sys.stderr)
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Upsert seed documents into Cosmos DB")
+def plan_upserts(documents: Sequence[SeedDocument]) -> int:
+    for document in documents:
+        print(f"would upsert {document.file} into {container_name(document.directory)}")
+    return len(documents)
+
+
+def upsert_all(database: DatabaseProxy, documents: Sequence[SeedDocument]) -> int:
+    for document in documents:
+        name = container_name(document.directory)
+        database.get_container_client(name).upsert_item(dict(document.content))
+        print(f"upserted {document.file} into {name}")
+    return len(documents)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Validate seed documents and upsert them into Cosmos DB")
     parser.add_argument("--endpoint", default=os.environ.get("COSMOS_ENDPOINT"))
     parser.add_argument("--database", default=os.environ.get("COSMOS_DATABASE", "sdui"))
-    parser.add_argument("--dry-run", action="store_true")
-    arguments = parser.parse_args()
+    parser.add_argument("--dry-run", action="store_true", help="validate and list planned upserts without connecting to Azure")
+    arguments = parser.parse_args(argv)
 
-    if not arguments.endpoint:
-        parser.error("--endpoint or COSMOS_ENDPOINT is required")
+    if not arguments.dry_run and not arguments.endpoint:
+        parser.error("--endpoint or COSMOS_ENDPOINT is required unless --dry-run is given")
 
-    count = upsert_all(arguments.endpoint, arguments.database, arguments.dry_run)
-    print(f"processed {count} documents")
+    report = validate_seed(SEED_ROOT)
+    print_findings(report)
+    if report.errors:
+        print(f"seed validation failed with {len(report.errors)} error(s); nothing was written", file=sys.stderr)
+        return 1
+
+    if arguments.dry_run:
+        count = plan_upserts(report.documents)
+        print(f"validated {count} documents; dry run wrote nothing")
+        return 0
+
+    database = CosmosClient(arguments.endpoint, credential=DefaultAzureCredential()).get_database_client(arguments.database)
+    count = upsert_all(database, report.documents)
+    print(f"upserted {count} documents")
     return 0
 
 
