@@ -6,15 +6,13 @@ attrs==26.1.0
     # via
     #   jsonschema
     #   referencing
-colorama==0.4.6 ; sys_platform == 'win32'
-    # via pytest
 iniconfig==2.3.0
     # via pytest
 jsonschema==4.26.0
     # via -r requirements-dev.in
 jsonschema-specifications==2025.9.1
     # via jsonschema
-librt==0.15.0 ; platform_python_implementation != 'PyPy'
+librt==0.15.0
     # via mypy
 mypy==2.3.1
     # via -r requirements-dev.in
@@ -41,7 +39,7 @@ rpds-py==2026.6.3
     #   referencing
 ruff==0.16.5
     # via -r requirements-dev.in
-types-jsonschema==4.26.0.20260518
+types-jsonschema==4.26.0.20261006
     # via -r requirements-dev.in
 typing-extensions==4.16.0
     # via
